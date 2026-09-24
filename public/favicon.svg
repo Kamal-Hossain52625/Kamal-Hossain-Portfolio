@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14141d" />
+      <stop offset="50%" stop-color="#09090d" />
+      <stop offset="100%" stop-color="#040406" />
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="40%" stop-color="#fb923c" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#fbbf24" />
+    </linearGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0" />
+    </radialGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#f97316" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- Background Base with Rounded Luxury Corners -->
+  <rect width="512" height="512" rx="120" fill="url(#bgGrad)" />
+  
+  <!-- Subtle Ambient Glow -->
+  <rect width="512" height="512" rx="120" fill="url(#glowGrad)" />
+
+  <!-- Outer Neon Border Stroke -->
+  <rect x="12" y="12" width="488" height="488" rx="108" fill="none" stroke="url(#borderGrad)" stroke-width="12" stroke-opacity="0.8" />
+  <rect x="24" y="24" width="464" height="464" rx="96" fill="none" stroke="#ffffff" stroke-width="2" stroke-opacity="0.08" />
+
+  <!-- Top Tech Badge Tag -->
+  <g transform="translate(0, -10)">
+    <rect x="206" y="130" width="100" height="28" rx="8" fill="#f97316" fill-opacity="0.15" stroke="#f97316" stroke-width="2.5" />
+    <text x="256" y="149" text-anchor="middle" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="900" fill="#fb923c" letter-spacing="4">ARCH</text>
+  </g>
+
+  <!-- Primary Logo Typography: Kamal.H -->
+  <!-- Filter shadow makes it pop in browser tabs -->
+  <g filter="url(#shadow)">
+    <text 
+      x="256" 
+      y="292" 
+      text-anchor="middle" 
+      font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif" 
+      font-weight="900" 
+      font-size="106" 
+      fill="#ffffff" 
+      letter-spacing="-3"
+    >
+      Kamal<tspan fill="#f97316">.H</tspan>
+    </text>
+  </g>
+
+  <!-- High-Tech Neon Accent Bar Underline with glowing dot -->
+  <g transform="translate(0, 5)">
+    <rect x="126" y="328" width="260" height="14" rx="7" fill="url(#brandGrad)" />
+    <circle cx="256" cy="335" r="4" fill="#ffffff" />
+  </g>
+
+  <!-- Bottom Coordinates Subtext -->
+  <text 
+    x="256" 
+    y="386" 
+    text-anchor="middle" 
+    font-family="system-ui, -apple-system, sans-serif" 
+    font-size="22" 
+    font-weight="700" 
+    fill="#ffffff" 
+    fill-opacity="0.4" 
+    letter-spacing="9"
+  >
+    PORTFOLIO
+  </text>
+</svg>
