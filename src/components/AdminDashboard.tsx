@@ -42,6 +42,8 @@ import {
   updateStoredProject,
   deleteStoredProject,
   resetStoredProjects,
+  subscribeToProjects,
+  subscribeToInquiries,
   getStoredInquiries,
   markInquiryStatus,
   deleteStoredInquiry,
@@ -84,8 +86,18 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
   const [adminPhotoUrlInput, setAdminPhotoUrlInput] = useState('');
   const [profilePhotoStatus, setProfilePhotoStatus] = useState('');
 
-  // Sync listener
+  // Sync listener & Cloud Realtime subscriptions
   useEffect(() => {
+    // 1. Subscribe to cloud projects & inquiries
+    const unsubProjects = subscribeToProjects((cloudProjects) => {
+      setProjects(cloudProjects);
+    });
+
+    const unsubInquiries = subscribeToInquiries((cloudInquiries) => {
+      setInquiries(cloudInquiries);
+    });
+
+    // 2. Broadcast listeners
     const handleProjectsUpdate = (e: any) => {
       if (e.detail) setProjects(e.detail);
       else setProjects(getStoredProjects());
@@ -104,6 +116,8 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
     window.addEventListener('portfolio_profile_image_updated', handleProfileUpdate);
 
     return () => {
+      unsubProjects();
+      unsubInquiries();
       window.removeEventListener('portfolio_projects_updated', handleProjectsUpdate);
       window.removeEventListener('portfolio_inquiries_updated', handleInquiriesUpdate);
       window.removeEventListener('portfolio_profile_image_updated', handleProfileUpdate);

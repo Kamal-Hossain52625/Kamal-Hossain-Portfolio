@@ -7,7 +7,7 @@ import { useState, useEffect, MouseEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Project } from '../types';
 import CaseStudyModal from './CaseStudyModal';
-import { getStoredProjects } from '../lib/storage';
+import { getStoredProjects, subscribeToProjects } from '../lib/storage';
 import { Github, ExternalLink, FileText, LayoutGrid, Layers, CircleDot } from 'lucide-react';
 
 // Live interactive mockup for dynamically added custom projects
@@ -298,12 +298,22 @@ export default function Projects() {
   const [selectedCaseStudy, setSelectedCaseStudy] = useState<Project | null>(null);
 
   useEffect(() => {
+    // 1. Subscribe to Firestore real-time cloud updates
+    const unsubscribeCloud = subscribeToProjects((cloudProjects) => {
+      setProjects(cloudProjects);
+    });
+
+    // 2. Listen to local broadcast events
     const handleUpdate = (e: any) => {
       if (e.detail) setProjects(e.detail);
       else setProjects(getStoredProjects());
     };
     window.addEventListener('portfolio_projects_updated', handleUpdate);
-    return () => window.removeEventListener('portfolio_projects_updated', handleUpdate);
+
+    return () => {
+      unsubscribeCloud();
+      window.removeEventListener('portfolio_projects_updated', handleUpdate);
+    };
   }, []);
 
   const filteredProjects = projects.filter((proj) => {

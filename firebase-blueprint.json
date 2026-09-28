@@ -1,0 +1,58 @@
+{
+  "$schema": "https://raw.githubusercontent.com/firebase/firebase-tools/master/schema/firestore-blueprint.json",
+  "entities": {
+    "projects": {
+      "title": "Projects",
+      "description": "Portfolio projects managed by admin",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "category": { "type": "string" },
+        "image": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "metrics": { "type": "string" },
+        "demoUrl": { "type": "string" },
+        "githubUrl": { "type": "string" },
+        "isFeatured": { "type": "boolean" },
+        "description": { "type": "string" },
+        "challenges": { "type": "string" },
+        "solutions": { "type": "string" },
+        "impact": { "type": "string" },
+        "gallery": { "type": "array", "items": { "type": "string" } },
+        "client": { "type": "string" },
+        "year": { "type": "string" },
+        "role": { "type": "string" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "title", "category", "image"]
+    },
+    "inquiries": {
+      "title": "Inquiries",
+      "description": "Contact form submissions from visitors",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "name", "email", "message"]
+    }
+  },
+  "firestore": {
+    "/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/projects" },
+      "description": "Public portfolio projects. Read by everyone, write allowed."
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": { "$ref": "#/entities/inquiries" },
+      "description": "Contact inquiries. Create by public, read/update allowed."
+    }
+  }
+}

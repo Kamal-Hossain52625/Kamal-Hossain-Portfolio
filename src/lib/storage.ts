@@ -3,8 +3,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import {
+  collection,
+  doc,
+  getDocs,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  orderBy
+} from 'firebase/firestore';
+import { db } from './firebase';
 import { Project, Inquiry, AdminUser } from '../types';
 import { projectsData } from '../data';
+
+const PROJECTS_COLLECTION = 'projects';
+const INQUIRIES_COLLECTION = 'inquiries';
 
 const PROJECTS_STORAGE_KEY = 'portfolio_projects';
 const INQUIRIES_STORAGE_KEY = 'portfolio_inquiries';
@@ -12,7 +26,7 @@ const AUTH_STORAGE_KEY = 'portfolio_admin_auth';
 const PASSWORD_STORAGE_KEY = 'portfolio_admin_password';
 const PROFILE_IMAGE_STORAGE_KEY = 'portfolio_profile_image';
 
-// Initial sample inquiries for preview
+// Initial sample inquiries
 const initialInquiries: Inquiry[] = [
   {
     id: 'inq-1',
@@ -34,7 +48,21 @@ const initialInquiries: Inquiry[] = [
   }
 ];
 
-// --- Projects Storage ---
+// Helper to sanitize undefined values before sending to Firestore
+function sanitizeProject(project: Project): Record<string, any> {
+  const clean: Record<string, any> = {};
+  for (const [key, val] of Object.entries(project)) {
+    if (val !== undefined) {
+      clean[key] = val;
+    }
+  }
+  return clean;
+}
+
+// ==========================================
+// 1. PROJECTS (Cloud Firestore + Local Cache)
+// ==========================================
+
 export function getStoredProjects(): Project[] {
   try {
     const raw = localStorage.getItem(PROJECTS_STORAGE_KEY);
@@ -47,8 +75,6 @@ export function getStoredProjects(): Project[] {
   } catch (e) {
     console.error('Failed to load projects from storage:', e);
   }
-  // Fallback to default
-  localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projectsData));
   return projectsData;
 }
 
@@ -61,10 +87,67 @@ export function saveStoredProjects(projects: Project[]): void {
   }
 }
 
+// Real-time listener for Firestore projects - syncs to any device!
+export function subscribeToProjects(onUpdate: (projects: Project[]) => void): () => void {
+  try {
+    const q = query(collection(db, PROJECTS_COLLECTION));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const cloudProjects: Project[] = [];
+          snapshot.forEach((docSnap) => {
+            cloudProjects.push({ id: docSnap.id, ...(docSnap.data() as any) });
+          });
+          // Update cache & dispatch
+          saveStoredProjects(cloudProjects);
+          onUpdate(cloudProjects);
+        } else {
+          // If Firestore is empty on first boot, seed it with default projects
+          seedDefaultProjects();
+          onUpdate(getStoredProjects());
+        }
+      },
+      (error) => {
+        console.warn('Firestore projects subscribe fallback to local:', error);
+        onUpdate(getStoredProjects());
+      }
+    );
+    return unsubscribe;
+  } catch (err) {
+    console.warn('Firestore not reachable, using local:', err);
+    onUpdate(getStoredProjects());
+    return () => {};
+  }
+}
+
+// Seed defaults to Firestore if database is fresh
+export async function seedDefaultProjects(): Promise<void> {
+  try {
+    for (const proj of projectsData) {
+      const docRef = doc(db, PROJECTS_COLLECTION, proj.id);
+      await setDoc(docRef, sanitizeProject(proj), { merge: true });
+    }
+  } catch (e) {
+    console.warn('Could not seed default projects to Firestore:', e);
+  }
+}
+
 export function addStoredProject(project: Project): Project[] {
   const current = getStoredProjects();
-  const updated = [project, ...current];
+  const updated = [project, ...current.filter((p) => p.id !== project.id)];
   saveStoredProjects(updated);
+
+  // Sync to Firestore immediately so all devices receive it
+  (async () => {
+    try {
+      const docRef = doc(db, PROJECTS_COLLECTION, project.id);
+      await setDoc(docRef, sanitizeProject(project));
+    } catch (e) {
+      console.error('Failed to sync added project to Firestore:', e);
+    }
+  })();
+
   return updated;
 }
 
@@ -72,6 +155,17 @@ export function updateStoredProject(project: Project): Project[] {
   const current = getStoredProjects();
   const updated = current.map((p) => (p.id === project.id ? project : p));
   saveStoredProjects(updated);
+
+  // Sync to Firestore
+  (async () => {
+    try {
+      const docRef = doc(db, PROJECTS_COLLECTION, project.id);
+      await setDoc(docRef, sanitizeProject(project), { merge: true });
+    } catch (e) {
+      console.error('Failed to sync updated project to Firestore:', e);
+    }
+  })();
+
   return updated;
 }
 
@@ -79,16 +173,31 @@ export function deleteStoredProject(id: string): Project[] {
   const current = getStoredProjects();
   const updated = current.filter((p) => p.id !== id);
   saveStoredProjects(updated);
+
+  // Remove from Firestore
+  (async () => {
+    try {
+      const docRef = doc(db, PROJECTS_COLLECTION, id);
+      await deleteDoc(docRef);
+    } catch (e) {
+      console.error('Failed to delete project from Firestore:', e);
+    }
+  })();
+
   return updated;
 }
 
 export function resetStoredProjects(): Project[] {
-  localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projectsData));
-  window.dispatchEvent(new CustomEvent('portfolio_projects_updated', { detail: projectsData }));
+  saveStoredProjects(projectsData);
+  // Re-seed to Firestore
+  seedDefaultProjects();
   return projectsData;
 }
 
-// --- Inquiries Storage ---
+// ==========================================
+// 2. INQUIRIES (Cloud Firestore + Local Cache)
+// ==========================================
+
 export function getStoredInquiries(): Inquiry[] {
   try {
     const raw = localStorage.getItem(INQUIRIES_STORAGE_KEY);
@@ -101,23 +210,76 @@ export function getStoredInquiries(): Inquiry[] {
   } catch (e) {
     console.error('Failed to load inquiries:', e);
   }
-  localStorage.setItem(INQUIRIES_STORAGE_KEY, JSON.stringify(initialInquiries));
   return initialInquiries;
+}
+
+export function subscribeToInquiries(onUpdate: (inquiries: Inquiry[]) => void): () => void {
+  try {
+    const q = query(collection(db, INQUIRIES_COLLECTION));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const cloudInquiries: Inquiry[] = [];
+          snapshot.forEach((docSnap) => {
+            cloudInquiries.push({ id: docSnap.id, ...(docSnap.data() as any) });
+          });
+          // Sort by date descending
+          cloudInquiries.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+          localStorage.setItem(INQUIRIES_STORAGE_KEY, JSON.stringify(cloudInquiries));
+          window.dispatchEvent(new CustomEvent('portfolio_inquiries_updated', { detail: cloudInquiries }));
+          onUpdate(cloudInquiries);
+        } else {
+          onUpdate(getStoredInquiries());
+        }
+      },
+      (error) => {
+        console.warn('Firestore inquiries subscribe error:', error);
+        onUpdate(getStoredInquiries());
+      }
+    );
+    return unsubscribe;
+  } catch (err) {
+    console.warn('Firestore inquiries unreachable, fallback:', err);
+    onUpdate(getStoredInquiries());
+    return () => {};
+  }
 }
 
 export function addStoredInquiry(inquiry: Omit<Inquiry, 'id' | 'date' | 'read'>): Inquiry {
   const current = getStoredInquiries();
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 16).replace('T', ' ');
+  const id = 'inq-' + Date.now();
   const newInquiry: Inquiry = {
     ...inquiry,
-    id: 'inq-' + Date.now(),
+    id,
     date: dateStr,
     read: false,
   };
   const updated = [newInquiry, ...current];
   localStorage.setItem(INQUIRIES_STORAGE_KEY, JSON.stringify(updated));
   window.dispatchEvent(new CustomEvent('portfolio_inquiries_updated', { detail: updated }));
+
+  // Sync to Firestore
+  (async () => {
+    try {
+      const docRef = doc(db, INQUIRIES_COLLECTION, id);
+      await setDoc(docRef, {
+        id,
+        name: newInquiry.name,
+        email: newInquiry.email,
+        topic: newInquiry.topic,
+        message: newInquiry.message,
+        date: dateStr,
+        read: false,
+        timestamp: new Date().toISOString()
+      });
+    } catch (e) {
+      console.warn('Could not save inquiry to Firestore:', e);
+    }
+  })();
+
   return newInquiry;
 }
 
@@ -126,6 +288,17 @@ export function markInquiryStatus(id: string, read: boolean): Inquiry[] {
   const updated = current.map((inq) => (inq.id === id ? { ...inq, read } : inq));
   localStorage.setItem(INQUIRIES_STORAGE_KEY, JSON.stringify(updated));
   window.dispatchEvent(new CustomEvent('portfolio_inquiries_updated', { detail: updated }));
+
+  // Update in Firestore
+  (async () => {
+    try {
+      const docRef = doc(db, INQUIRIES_COLLECTION, id);
+      await setDoc(docRef, { read }, { merge: true });
+    } catch (e) {
+      console.warn('Failed to update inquiry read status in Firestore:', e);
+    }
+  })();
+
   return updated;
 }
 
@@ -134,13 +307,26 @@ export function deleteStoredInquiry(id: string): Inquiry[] {
   const updated = current.filter((inq) => inq.id !== id);
   localStorage.setItem(INQUIRIES_STORAGE_KEY, JSON.stringify(updated));
   window.dispatchEvent(new CustomEvent('portfolio_inquiries_updated', { detail: updated }));
+
+  // Delete from Firestore
+  (async () => {
+    try {
+      const docRef = doc(db, INQUIRIES_COLLECTION, id);
+      await deleteDoc(docRef);
+    } catch (e) {
+      console.warn('Failed to delete inquiry from Firestore:', e);
+    }
+  })();
+
   return updated;
 }
 
-// --- Admin Authentication ---
+// ==========================================
+// 3. ADMIN AUTHENTICATION
+// ==========================================
+
 export function getAdminPassword(): string {
   const current = localStorage.getItem(PASSWORD_STORAGE_KEY);
-  // If no password or old placeholder 'admin123', update to new requested default 52625
   if (!current || current === 'admin123') {
     localStorage.setItem(PASSWORD_STORAGE_KEY, '52625');
     return '52625';
@@ -152,7 +338,10 @@ export function setAdminPassword(newPass: string): void {
   localStorage.setItem(PASSWORD_STORAGE_KEY, newPass);
 }
 
-// --- Profile Image Storage ---
+// ==========================================
+// 4. PROFILE IMAGE STORAGE
+// ==========================================
+
 export function getStoredProfileImage(): string {
   try {
     return localStorage.getItem(PROFILE_IMAGE_STORAGE_KEY) || '';
@@ -183,7 +372,6 @@ export function isUserAdmin(): boolean {
 
 export function loginAdmin(username: string, pass: string): boolean {
   const validPass = getAdminPassword();
-  // Allow 'admin', 'kamal', or Kamal's email
   const validUsernames = ['admin', 'kamal', 'kamalhossainm5443@gmail.com', 'mariaafrin1106@gmail.com'];
   if (validUsernames.includes(username.trim().toLowerCase()) && pass === validPass) {
     const session = {

@@ -130,16 +130,47 @@ export default function ProjectFormModal({ project, onClose, onSave }: ProjectFo
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert('File size exceeds 5MB. Please choose a smaller image.');
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size exceeds 10MB. Please choose a smaller image.');
       return;
     }
     setIsProcessingImage(true);
     const reader = new FileReader();
     reader.onload = (event) => {
       const result = event.target?.result as string;
-      setImage(result);
-      setIsProcessingImage(false);
+      // Optimize & compress image using canvas so it fits perfectly in cloud database (< 250KB)
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 1200;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+          setImage(compressedDataUrl);
+        } else {
+          setImage(result);
+        }
+        setIsProcessingImage(false);
+      };
+      img.onerror = () => {
+        setImage(result);
+        setIsProcessingImage(false);
+      };
+      img.src = result;
     };
     reader.onerror = () => {
       alert('Failed to read image file.');
