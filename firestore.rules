@@ -8,5 +8,8 @@ service cloud.firestore {
     match /inquiries/{inquiryId} {
       allow read, write: if true;
     }
+    match /settings/{settingId} {
+      allow read, write: if true;
+    }
   }
 }

@@ -43,6 +43,15 @@
         "timestamp": { "type": "string" }
       },
       "required": ["id", "name", "email", "message"]
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Portfolio global configuration and profile photo",
+      "type": "object",
+      "properties": {
+        "profileImage": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
     }
   },
   "firestore": {
@@ -53,6 +62,10 @@
     "/inquiries/{inquiryId}": {
       "schema": { "$ref": "#/entities/inquiries" },
       "description": "Contact inquiries. Create by public, read/update allowed."
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/settings" },
+      "description": "Settings and profile photo. Read by public, write allowed."
     }
   }
 }

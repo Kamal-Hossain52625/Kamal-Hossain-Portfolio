@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShieldAlert, ShieldCheck, HeartHandshake, Code, LayoutDashboard, Cpu } from 'lucide-react';
-import { getStoredProfileImage } from '../lib/storage';
+import { getStoredProfileImage, subscribeToProfileImage } from '../lib/storage';
 
 interface ManifestoItem {
   id: string;
@@ -72,12 +72,20 @@ export default function About() {
   const [profileImage, setProfileImage] = useState<string>(getStoredProfileImage);
 
   useEffect(() => {
+    const unsubCloud = subscribeToProfileImage((cloudImg) => {
+      setProfileImage(cloudImg);
+    });
+
     const handlePhotoUpdate = (e: any) => {
       if (e.detail !== undefined) setProfileImage(e.detail);
       else setProfileImage(getStoredProfileImage());
     };
     window.addEventListener('portfolio_profile_image_updated', handlePhotoUpdate);
-    return () => window.removeEventListener('portfolio_profile_image_updated', handlePhotoUpdate);
+
+    return () => {
+      unsubCloud();
+      window.removeEventListener('portfolio_profile_image_updated', handlePhotoUpdate);
+    };
   }, []);
 
   return (
@@ -110,21 +118,21 @@ export default function About() {
             </h3>
             
             <p className="font-sans text-white/60 text-sm md:text-base leading-relaxed tracking-wide font-light">
-              Over the last 5 years, I have engineered full-stack architectures and crafted high-end creative interfaces for clients globally. My philosophy is simple: **every line of code should run at maximum performance, and every pixel should carry artistic intent.**
+              Over the last 2 years, I have engineered full-stack architectures and crafted high-end creative interfaces for clients globally. My philosophy is simple: **every line of code should run at maximum performance, and every pixel should carry artistic intent.**
             </p>
             
             <p className="font-sans text-white/60 text-sm md:text-base leading-relaxed tracking-wide font-light">
-              I avoid standard templates. Instead, I build modular, highly polished ecosystems using modern front-end layers (React, TypeScript, Tailwind, and Motion) coupled with resilient background backends (Node.js, Express, PostgreSQL, Redis, and Cloud setups).
+              I avoid standard templates. Instead, I build modular, highly polished ecosystems using modern front-end layers (React, PHP, Ajax, JavaScript, TypeScript, Tailwind, and Motion) coupled with resilient background backends (Node.js, Laravel, jQuery, PostgreSQL, Redis, and Cloud setups).
             </p>
 
             <div className="grid grid-cols-2 gap-4 mt-4 font-mono">
               <div className="p-4 border border-white/10 rounded-xl bg-white/5 backdrop-blur-md">
                 <span className="text-white/40 text-[10px] uppercase tracking-wider block mb-1">CURRENT LOCATION</span>
-                <span className="text-white text-xs font-semibold">Berlin, Germany (Remote Enabled)</span>
+                <span className="text-white text-xs font-semibold">Mirpur, Dhaka, Bangladesh (Remote Enabled)</span>
               </div>
               <div className="p-4 border border-white/10 rounded-xl bg-white/5 backdrop-blur-md">
                 <span className="text-white/40 text-[10px] uppercase tracking-wider block mb-1">INTERESTS</span>
-                <span className="text-white text-xs font-semibold">Generative Art, System Security, UI Motion</span>
+                <span className="text-white text-xs font-semibold">Generative Art, Softwere Build, System Security, UI Motion</span>
               </div>
             </div>
           </div>
@@ -177,7 +185,7 @@ export default function About() {
                 </div>
                 <div className="flex justify-between items-center border-b border-white/5 pb-2.5">
                   <span className="text-xs text-white/40">Role</span>
-                  <span className="text-xs font-semibold text-orange-400">Lead Full-Stack Architect</span>
+                  <span className="text-xs font-semibold text-orange-400">Lead Full-Stack Laravel Developer</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-white/5 pb-2.5">
                   <span className="text-xs text-white/40">Available Email</span>

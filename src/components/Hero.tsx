@@ -3,13 +3,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Github, Linkedin, Mail, ArrowDown, Sparkles, CheckCircle2, ChevronRight } from 'lucide-react';
-import { BehanceIcon, FacebookIcon } from './Footer';
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  Github,
+  Linkedin,
+  Mail,
+  ArrowDown,
+  Sparkles,
+  CheckCircle2,
+  ChevronRight,
+} from "lucide-react";
+import { BehanceIcon, FacebookIcon } from "./Footer";
+import { getStoredProfileImage, subscribeToProfileImage } from "../lib/storage";
 
 interface AudienceFilter {
-  id: 'all' | 'recruiter' | 'founder' | 'freelancer';
+  id: "all" | "recruiter" | "founder" | "freelancer";
   label: string;
   tagline: string;
   badge: string;
@@ -18,51 +27,107 @@ interface AudienceFilter {
 
 const audienceData: AudienceFilter[] = [
   {
-    id: 'all',
-    label: 'GENERAL PROFILE',
-    badge: 'SENIOR ENGINEER & ARCHITECT',
-    tagline: 'Engineering high-throughput systems and high-fidelity creative web applications.',
-    bullets: ['TypeScript & Next.js Ecosystem expert', 'Complex client-side custom vectors & canvas engines', 'Secure middleware gateways & API designs']
+    id: "all",
+    label: "GENERAL PROFILE",
+    badge: "SENIOR ENGINEER & ARCHITECT",
+    tagline:
+      "Engineering high-throughput systems and high-fidelity creative web applications.",
+    bullets: [
+      "TypeScript & Next.js Ecosystem expert",
+      "Complex client-side custom vectors & canvas engines",
+      "Secure middleware gateways & API designs",
+    ],
   },
   {
-    id: 'recruiter',
-    label: 'RECRUITER VIEW',
-    badge: 'ATS-COMPLIANT & TEAM LEAD READY',
-    tagline: 'Ready to integrate seamlessly into agile teams as a Senior/Lead Software Engineer.',
-    bullets: ['5+ years professional codebase experience', 'Full stack depth (Node.js, PostgreSQL, Cloud Deployments)', 'Mentored 10+ junior developers and coordinated deployments']
+    id: "recruiter",
+    label: "RECRUITER VIEW",
+    badge: "ATS-COMPLIANT & TEAM LEAD READY",
+    tagline:
+      "Ready to integrate seamlessly into agile teams as a Senior/Lead Software Engineer.",
+    bullets: [
+      "5+ years professional codebase experience",
+      "Full stack depth (Node.js, PostgreSQL, Cloud Deployments)",
+      "Mentored 10+ junior developers and coordinated deployments",
+    ],
   },
   {
-    id: 'founder',
-    label: 'FOUNDER VIEW',
-    badge: 'STARTUP CO-PILOT & BUILDER',
-    tagline: 'Transforming napkin diagrams into production-grade, highly scalable SaaS portals.',
-    bullets: ['Optimized cloud deployment structures (AWS/Docker/Cloud Run)', 'Zero-latency telemetry dashboard implementations', 'Rapid prototyper with clean maintainable structure']
+    id: "founder",
+    label: "FOUNDER VIEW",
+    badge: "STARTUP CO-PILOT & BUILDER",
+    tagline:
+      "Transforming napkin diagrams into production-grade, highly scalable SaaS portals.",
+    bullets: [
+      "Optimized cloud deployment structures (AWS/Docker/Cloud Run)",
+      "Zero-latency telemetry dashboard implementations",
+      "Rapid prototyper with clean maintainable structure",
+    ],
   },
   {
-    id: 'freelancer',
-    label: 'CLIENT VIEW',
-    badge: 'FREELANCE CONSULTANT & AGENCY EXPERT',
-    tagline: 'Designing, developing, and launching premium bespoke sites that elevate your brand.',
-    bullets: ['Awwwards-worthy fluid layouts & micro-interactions', '100% SEO, accessibility, and speed scores', 'Fixed-scope contracts with absolute transparent delivery schedules']
-  }
+    id: "freelancer",
+    label: "CLIENT VIEW",
+    badge: "FREELANCE CONSULTANT & AGENCY EXPERT",
+    tagline:
+      "Designing, developing, and launching premium bespoke sites that elevate your brand.",
+    bullets: [
+      "Awwwards-worthy fluid layouts & micro-interactions",
+      "100% SEO, accessibility, and speed scores",
+      "Fixed-scope contracts with absolute transparent delivery schedules",
+    ],
+  },
 ];
 
 export default function Hero() {
-  const [selectedAudience, setSelectedAudience] = useState<'all' | 'recruiter' | 'founder' | 'freelancer'>('all');
+  const [selectedAudience, setSelectedAudience] = useState<
+    "all" | "recruiter" | "founder" | "freelancer"
+  >("all");
+  const [profileImage, setProfileImage] = useState<string>(
+    getStoredProfileImage,
+  );
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Subscribe to profile photo updates from Firestore and broadcast
+  useEffect(() => {
+    const unsub = subscribeToProfileImage((img) => {
+      setProfileImage(img);
+    });
+
+    const handlePhotoUpdate = (e: any) => {
+      if (e.detail !== undefined) setProfileImage(e.detail);
+      else setProfileImage(getStoredProfileImage());
+    };
+    window.addEventListener(
+      "portfolio_profile_image_updated",
+      handlePhotoUpdate,
+    );
+
+    return () => {
+      unsub();
+      window.removeEventListener(
+        "portfolio_profile_image_updated",
+        handlePhotoUpdate,
+      );
+    };
+  }, []);
 
   // Background interactive mesh canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     let animationFrameId: number;
     let width = (canvas.width = canvas.offsetWidth);
     let height = (canvas.height = canvas.offsetHeight);
 
-    const particles: { x: number; y: number; vx: number; vy: number; radius: number; opacity: number }[] = [];
+    const particles: {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      radius: number;
+      opacity: number;
+    }[] = [];
     const particleCount = 45;
 
     for (let i = 0; i < particleCount; i++) {
@@ -90,8 +155,8 @@ export default function Hero() {
       mouseY = -1000;
     };
 
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mouseleave', handleMouseLeave);
+    canvas.addEventListener("mousemove", handleMouseMove);
+    canvas.addEventListener("mouseleave", handleMouseLeave);
 
     const handleResize = () => {
       if (!canvas) return;
@@ -99,15 +164,22 @@ export default function Hero() {
       height = canvas.height = canvas.offsetHeight;
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
       // Draw dynamic glowing blobs
-      const gradient = ctx.createRadialGradient(width * 0.3, height * 0.4, 10, width * 0.3, height * 0.4, width * 0.5);
-      gradient.addColorStop(0, 'rgba(197, 168, 128, 0.04)');
-      gradient.addColorStop(1, 'rgba(5, 5, 5, 0)');
+      const gradient = ctx.createRadialGradient(
+        width * 0.3,
+        height * 0.4,
+        10,
+        width * 0.3,
+        height * 0.4,
+        width * 0.5,
+      );
+      gradient.addColorStop(0, "rgba(197, 168, 128, 0.04)");
+      gradient.addColorStop(1, "rgba(5, 5, 5, 0)");
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height);
 
@@ -161,43 +233,92 @@ export default function Hero() {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       if (canvas) {
-        canvas.removeEventListener('mousemove', handleMouseMove);
-        canvas.removeEventListener('mouseleave', handleMouseLeave);
+        canvas.removeEventListener("mousemove", handleMouseMove);
+        canvas.removeEventListener("mouseleave", handleMouseLeave);
       }
     };
   }, []);
 
-  const currentAudienceData = audienceData.find((a) => a.id === selectedAudience) || audienceData[0];
+  const currentAudienceData =
+    audienceData.find((a) => a.id === selectedAudience) || audienceData[0];
 
   const handleScrollToProjects = () => {
-    document.querySelector('#projects')?.scrollIntoView({ behavior: 'smooth' });
+    document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <section 
-      id="hero" 
+    <section
+      id="hero"
       className="relative min-h-screen flex flex-col justify-center items-center bg-luxury-black text-white px-6 md:px-12 py-24 overflow-hidden bg-grid-pattern"
     >
       {/* Animated interactive canvas layer */}
-      <canvas 
-        ref={canvasRef} 
-        className="absolute inset-0 w-full h-full pointer-events-auto z-1" 
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-auto z-1"
       />
 
       {/* Decorative luxury gradient background glows */}
       <div className="absolute top-[-15%] left-[-10%] w-[600px] h-[600px] bg-orange-600/10 rounded-full blur-[120px] pointer-events-none select-none z-0" />
       <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[100px] pointer-events-none select-none z-0" />
-      
+
       {/* Background radial overlay to focus center */}
       <div className="absolute inset-0 bg-radial-gradient opacity-80 pointer-events-none select-none z-0" />
 
       {/* Content wrapper */}
       <div className="max-w-7xl mx-auto w-full z-10 flex flex-col items-center justify-center text-center mt-6">
-        
-        {/* Availability Badge */}
-        
+        {/* Profile Avatar & Live Status Badge */}
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col items-center mb-6 group"
+        >
+          <div className="relative">
+            {/* Glowing ambient ring */}
+            <div className="absolute -inset-1.5 bg-gradient-to-r from-orange-500 via-amber-500 to-blue-600 rounded-full blur-md opacity-70 group-hover:opacity-100 transition-opacity duration-500 animate-pulse" />
+
+            {/* Avatar container */}
+            <div className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full p-1 bg-luxury-black border-2 border-white/20 shadow-2xl overflow-hidden flex items-center justify-center">
+              {profileImage ? (
+                <img
+                  src={profileImage}
+                  alt="Kamal Hossain - Profile"
+                  className="w-full h-full rounded-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                />
+              ) : (
+                <div className="w-full h-full rounded-full bg-gradient-to-br from-zinc-800 to-zinc-950 flex flex-col items-center justify-center">
+                  <span className="font-mono text-xl sm:text-2xl font-black text-orange-400">
+                    KH
+                  </span>
+                  <span className="text-[8px] font-mono text-white/40 tracking-wider">
+                    ARCHITECT
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Active online pulse indicator */}
+            <div
+              className="absolute bottom-1 right-1 flex items-center justify-center"
+              title="Online & Available"
+            >
+              <span className="relative flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-black"></span>
+              </span>
+            </div>
+          </div>
+
+          {/* Availability pill */}
+          <div className="inline-flex items-center gap-2 mt-3 px-3.5 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="text-[10px] font-mono tracking-widest text-white/80 font-bold uppercase">
+              AVAILABLE FOR NEW ARCHITECTURES
+            </span>
+          </div>
+        </motion.div>
 
         {/* Large Cinematic Title */}
         <div className="relative mb-6">
@@ -207,8 +328,14 @@ export default function Hero() {
             transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           >
             <h1 className="font-sans text-[48px] sm:text-[75px] md:text-[105px] leading-[0.85] font-black tracking-tighter uppercase mb-2 italic text-white select-none">
-              KAMAL<br/>
-              <span className="text-transparent border-t border-b border-white/20 px-2" style={{ WebkitTextStroke: '1.5px white', msTextStroke: '1.5px white' }}>HOSSAIN</span>
+              KAMAL
+              <br />
+              <span
+                className="text-transparent border-t border-b border-white/20 px-2"
+                style={{ WebkitTextStroke: "1.5px white" }}
+              >
+                HOSSAIN
+              </span>
             </h1>
           </motion.div>
           <motion.div
@@ -217,7 +344,7 @@ export default function Hero() {
             transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
           >
             <h2 className="text-sm sm:text-base md:text-lg font-mono text-orange-500 tracking-[0.35em] font-semibold uppercase mt-5">
-              Senior Software Architect
+              Senior Full-Stack Software Developer
             </h2>
           </motion.div>
         </div>
@@ -229,7 +356,9 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.3 }}
           className="max-w-2xl text-white/60 font-sans text-sm md:text-base leading-relaxed tracking-wide mb-10 text-center font-light"
         >
-          Redefining the digital landscape through award-winning design systems and high-performance engineering. Helping brands, founders, and teams scale with beautiful glass architectures.
+          Redefining the digital landscape through award-winning design systems
+          and high-performance engineering. Helping brands, founders, and teams
+          scale with beautiful glass architectures.
         </motion.p>
 
         {/* Dynamic Recruiter/Founder/Freelancer filter menu (FLEXIBLE USER INTENT) */}
@@ -246,16 +375,16 @@ export default function Hero() {
                 key={tab.id}
                 onClick={() => setSelectedAudience(tab.id)}
                 className={`relative px-4 py-2.5 text-[9px] md:text-[10px] font-mono tracking-widest font-extrabold rounded-xl md:rounded-full transition-all duration-300 uppercase cursor-pointer ${
-                  selectedAudience === tab.id 
-                    ? 'text-white' 
-                    : 'text-white/50 hover:text-white'
+                  selectedAudience === tab.id
+                    ? "text-white"
+                    : "text-white/50 hover:text-white"
                 }`}
               >
                 {selectedAudience === tab.id && (
                   <motion.div
                     layoutId="heroFilterBg"
                     className="absolute inset-0 bg-gradient-to-r from-orange-500 to-blue-600 rounded-xl md:rounded-full shadow-lg"
-                    transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 28 }}
                   />
                 )}
                 <span className="relative z-10">{tab.label}</span>
@@ -271,7 +400,7 @@ export default function Hero() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
                 className="w-full bg-white/5 backdrop-blur-2xl border border-white/10 p-6 md:p-8 rounded-3xl shadow-2xl text-left flex flex-col md:flex-row justify-between gap-6"
               >
                 <div className="flex-1">
@@ -330,48 +459,48 @@ export default function Hero() {
         >
           {/* Social links */}
           <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-            <a 
-              href="https://github.com/Kamal-Hossain52625" 
-              target="_blank" 
-              rel="noreferrer" 
+            <a
+              href="https://github.com/Kamal-Hossain52625"
+              target="_blank"
+              rel="noreferrer"
               className="p-2.5 sm:p-3 border border-luxury-border rounded-full text-zinc-400 hover:text-white hover:border-zinc-700 transition-all shadow-md bg-[#070709]"
               aria-label="GitHub Profile"
               title="GitHub Profile: Kamal-Hossain52625"
             >
               <Github className="w-4 h-4" />
             </a>
-            <a 
-              href="https://www.linkedin.com/in/kamal-hossain-4087a7297" 
-              target="_blank" 
-              rel="noreferrer" 
+            <a
+              href="https://www.linkedin.com/in/kamal-hossain-4087a7297"
+              target="_blank"
+              rel="noreferrer"
               className="p-2.5 sm:p-3 border border-luxury-border rounded-full text-zinc-400 hover:text-white hover:border-zinc-700 transition-all shadow-md bg-[#070709]"
               aria-label="LinkedIn Profile"
               title="LinkedIn Profile: Kamal Hossain"
             >
               <Linkedin className="w-4 h-4" />
             </a>
-            <a 
-              href="https://www.behance.net/kamalhossain66/" 
-              target="_blank" 
-              rel="noreferrer" 
+            <a
+              href="https://www.behance.net/kamalhossain66/"
+              target="_blank"
+              rel="noreferrer"
               className="p-2.5 sm:p-3 border border-luxury-border rounded-full text-zinc-400 hover:text-white hover:border-zinc-700 transition-all shadow-md bg-[#070709]"
               aria-label="Behance Profile"
               title="Behance Portfolio: kamalhossain66"
             >
               <BehanceIcon className="w-4 h-4" />
             </a>
-            <a 
-              href="https://www.facebook.com/profile.php?id=100005506395614" 
-              target="_blank" 
-              rel="noreferrer" 
+            <a
+              href="https://www.facebook.com/profile.php?id=100005506395614"
+              target="_blank"
+              rel="noreferrer"
               className="p-2.5 sm:p-3 border border-luxury-border rounded-full text-zinc-400 hover:text-white hover:border-zinc-700 transition-all shadow-md bg-[#070709]"
               aria-label="Facebook Profile"
               title="Facebook Profile: Kamal Hossain"
             >
               <FacebookIcon className="w-4 h-4" />
             </a>
-            <a 
-              href="mailto:kamalhossainm5443@gmail.com" 
+            <a
+              href="mailto:kamalhossainm5443@gmail.com"
               className="p-2.5 sm:p-3 border border-luxury-border rounded-full text-zinc-400 hover:text-white hover:border-zinc-700 transition-all shadow-md bg-[#070709]"
               aria-label="Send Email"
               title="Email: kamalhossainm5443@gmail.com"
@@ -383,31 +512,48 @@ export default function Hero() {
           {/* Quick Stats Highlights */}
           <div className="flex items-center gap-8 text-left font-mono">
             <div className="flex flex-col">
-              <span className="text-xl font-bold text-white tracking-tight">5+</span>
-              <span className="text-[9px] text-zinc-500 tracking-wider">YEARS EXP</span>
+              <span className="text-xl font-bold text-white tracking-tight">
+                2+
+              </span>
+              <span className="text-[9px] text-zinc-500 tracking-wider">
+                YEARS OF EXPERIENCE
+              </span>
             </div>
             <div className="h-6 w-[1px] bg-luxury-border" />
             <div className="flex flex-col">
-              <span className="text-xl font-bold text-white tracking-tight">40+</span>
-              <span className="text-[9px] text-zinc-500 tracking-wider">PROJECTS COMPLETED</span>
+              <span className="text-xl font-bold text-white tracking-tight">
+                10+
+              </span>
+              <span className="text-[9px] text-zinc-500 tracking-wider">
+                PROJECTS COMPLETED
+              </span>
             </div>
             <div className="h-6 w-[1px] bg-luxury-border" />
             <div className="flex flex-col">
-              <span className="text-xl font-bold text-gradient-gold tracking-tight">100%</span>
-              <span className="text-[9px] text-zinc-500 tracking-wider">CLIENT RATING</span>
+              <span className="text-xl font-bold text-gradient-gold tracking-tight">
+                100%
+              </span>
+              <span className="text-[9px] text-zinc-500 tracking-wider">
+                CLIENT RATING
+              </span>
             </div>
           </div>
 
           {/* Scroll Down Hint indicator */}
           <button
-            onClick={() => document.querySelector('#about')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() =>
+              document
+                .querySelector("#about")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
             className="flex items-center gap-2 group cursor-pointer text-zinc-500 hover:text-gold-300 transition-colors"
           >
-            <span className="text-[9px] font-mono tracking-widest font-semibold">SCROLL DOWN</span>
+            <span className="text-[9px] font-mono tracking-widest font-semibold">
+              SCROLL DOWN
+            </span>
             <ArrowDown className="w-3 h-3 group-hover:translate-y-1 transition-transform animate-bounce" />
           </button>
         </motion.div>
-
       </div>
     </section>
   );

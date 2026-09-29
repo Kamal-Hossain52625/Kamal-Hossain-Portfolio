@@ -19,6 +19,8 @@ import { projectsData } from '../data';
 
 const PROJECTS_COLLECTION = 'projects';
 const INQUIRIES_COLLECTION = 'inquiries';
+const SETTINGS_COLLECTION = 'settings';
+const PROFILE_DOC = 'profile';
 
 const PROJECTS_STORAGE_KEY = 'portfolio_projects';
 const INQUIRIES_STORAGE_KEY = 'portfolio_inquiries';
@@ -339,7 +341,7 @@ export function setAdminPassword(newPass: string): void {
 }
 
 // ==========================================
-// 4. PROFILE IMAGE STORAGE
+// 4. PROFILE IMAGE STORAGE (Cloud Firestore + Local Cache)
 // ==========================================
 
 export function getStoredProfileImage(): string {
@@ -355,7 +357,58 @@ export function saveStoredProfileImage(imageUrl: string): void {
     localStorage.setItem(PROFILE_IMAGE_STORAGE_KEY, imageUrl);
     window.dispatchEvent(new CustomEvent('portfolio_profile_image_updated', { detail: imageUrl }));
   } catch (e) {
-    console.error('Failed to save profile image:', e);
+    console.error('Failed to save profile image locally:', e);
+  }
+
+  // Sync to Firestore immediately so all other devices receive the updated profile photo
+  (async () => {
+    try {
+      const docRef = doc(db, SETTINGS_COLLECTION, PROFILE_DOC);
+      await setDoc(docRef, {
+        profileImage: imageUrl,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (e) {
+      console.warn('Failed to sync profile photo to Firestore:', e);
+    }
+  })();
+}
+
+// Real-time listener for profile photo across all devices
+export function subscribeToProfileImage(onUpdate: (imageUrl: string) => void): () => void {
+  try {
+    const docRef = doc(db, SETTINGS_COLLECTION, PROFILE_DOC);
+    const unsubscribe = onSnapshot(
+      docRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const img = typeof data?.profileImage === 'string' ? data.profileImage : '';
+          localStorage.setItem(PROFILE_IMAGE_STORAGE_KEY, img);
+          window.dispatchEvent(new CustomEvent('portfolio_profile_image_updated', { detail: img }));
+          onUpdate(img);
+        } else {
+          // If Firestore document doesn't exist yet, seed it from local cache if available
+          const localImg = getStoredProfileImage();
+          if (localImg) {
+            setDoc(docRef, {
+              profileImage: localImg,
+              updatedAt: new Date().toISOString()
+            }, { merge: true }).catch(() => {});
+          }
+          onUpdate(localImg);
+        }
+      },
+      (error) => {
+        console.warn('Firestore profile image listener fallback:', error);
+        onUpdate(getStoredProfileImage());
+      }
+    );
+    return unsubscribe;
+  } catch (err) {
+    console.warn('Firestore unreachable for profile photo, using local cache:', err);
+    onUpdate(getStoredProfileImage());
+    return () => {};
   }
 }
 

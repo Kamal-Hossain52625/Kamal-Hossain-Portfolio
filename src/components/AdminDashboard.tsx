@@ -51,7 +51,8 @@ import {
   setAdminPassword,
   logoutAdmin,
   getStoredProfileImage,
-  saveStoredProfileImage
+  saveStoredProfileImage,
+  subscribeToProfileImage
 } from '../lib/storage';
 import ProjectFormModal from './ProjectFormModal';
 import CaseStudyModal from './CaseStudyModal';
@@ -97,6 +98,10 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
       setInquiries(cloudInquiries);
     });
 
+    const unsubProfile = subscribeToProfileImage((cloudProfileImg) => {
+      setAdminProfilePhoto(cloudProfileImg);
+    });
+
     // 2. Broadcast listeners
     const handleProjectsUpdate = (e: any) => {
       if (e.detail) setProjects(e.detail);
@@ -118,6 +123,7 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
     return () => {
       unsubProjects();
       unsubInquiries();
+      unsubProfile();
       window.removeEventListener('portfolio_projects_updated', handleProjectsUpdate);
       window.removeEventListener('portfolio_inquiries_updated', handleInquiriesUpdate);
       window.removeEventListener('portfolio_profile_image_updated', handleProfileUpdate);
@@ -243,17 +249,50 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
   const handleAdminPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Photo size exceeds 5MB. Please choose a smaller image.');
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Photo size exceeds 10MB. Please choose a smaller image.');
       return;
     }
     const reader = new FileReader();
     reader.onload = (event) => {
       const res = event.target?.result as string;
-      saveStoredProfileImage(res);
-      setAdminProfilePhoto(res);
-      setProfilePhotoStatus('Profile photo updated successfully!');
-      setTimeout(() => setProfilePhotoStatus(''), 3000);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 800;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.85);
+          saveStoredProfileImage(compressed);
+          setAdminProfilePhoto(compressed);
+        } else {
+          saveStoredProfileImage(res);
+          setAdminProfilePhoto(res);
+        }
+        setProfilePhotoStatus('Profile photo updated & synced across all devices!');
+        setTimeout(() => setProfilePhotoStatus(''), 4000);
+      };
+      img.onerror = () => {
+        saveStoredProfileImage(res);
+        setAdminProfilePhoto(res);
+        setProfilePhotoStatus('Profile photo updated & synced across all devices!');
+        setTimeout(() => setProfilePhotoStatus(''), 4000);
+      };
+      img.src = res;
     };
     reader.readAsDataURL(file);
   };
