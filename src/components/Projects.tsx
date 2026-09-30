@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Project } from '../types';
 import CaseStudyModal from './CaseStudyModal';
 import { getStoredProjects, subscribeToProjects } from '../lib/storage';
+import { formatExternalUrl, isValidExternalUrl } from '../lib/urlHelper';
 import { Github, ExternalLink, FileText, LayoutGrid, Layers, CircleDot } from 'lucide-react';
 
 // Live interactive mockup for dynamically added custom projects
@@ -479,21 +480,33 @@ export default function Projects() {
                     </button>
 
                     <div className="flex items-center gap-3">
+                      {isValidExternalUrl(project.github) && (
+                        <a
+                          href={formatExternalUrl(project.github)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 border border-white/10 rounded-full text-white/60 hover:text-white hover:border-white/20 transition-colors bg-white/5 hover:bg-white/10"
+                          aria-label="View Source on GitHub (Opens in new tab)"
+                          title="View Source on GitHub (Opens in new tab)"
+                        >
+                          <Github className="w-3.5 h-3.5" />
+                        </a>
+                      )}
                       <a
-                        href={project.github}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-2 border border-white/10 rounded-full text-white/60 hover:text-white hover:border-white/20 transition-colors bg-white/5 hover:bg-white/10"
-                        aria-label="View Source on GitHub"
+                        href={isValidExternalUrl(project.liveDemo) ? formatExternalUrl(project.liveDemo) : '#'}
+                        target={isValidExternalUrl(project.liveDemo) ? "_blank" : undefined}
+                        rel={isValidExternalUrl(project.liveDemo) ? "noopener noreferrer" : undefined}
+                        onClick={(e) => {
+                          if (!isValidExternalUrl(project.liveDemo)) {
+                            e.preventDefault();
+                            setSelectedCaseStudy(project);
+                          }
+                        }}
+                        className="p-2 border border-white/10 rounded-full text-white/60 hover:text-white hover:border-white/20 transition-colors bg-white/5 hover:bg-white/10 group/btn"
+                        aria-label="Launch Live Preview in New Tab"
+                        title={isValidExternalUrl(project.liveDemo) ? "Launch Live Preview (Opens in new tab)" : "View Architecture Details"}
                       >
-                        <Github className="w-3.5 h-3.5" />
-                      </a>
-                      <a
-                        href={project.liveDemo}
-                        className="p-2 border border-white/10 rounded-full text-white/60 hover:text-white hover:border-white/20 transition-colors bg-white/5 hover:bg-white/10"
-                        aria-label="Launch Live Preview"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
+                        <ExternalLink className="w-3.5 h-3.5 group-hover/btn:text-orange-400 transition-colors" />
                       </a>
                     </div>
 

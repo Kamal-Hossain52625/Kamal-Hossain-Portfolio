@@ -54,6 +54,7 @@ import {
   saveStoredProfileImage,
   subscribeToProfileImage
 } from '../lib/storage';
+import { formatExternalUrl, isValidExternalUrl } from '../lib/urlHelper';
 import ProjectFormModal from './ProjectFormModal';
 import CaseStudyModal from './CaseStudyModal';
 
@@ -616,6 +617,20 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
                           <Eye className="w-3.5 h-3.5" />
                           <span className="hidden sm:inline">PREVIEW</span>
                         </button>
+
+                        {/* Open Live Demo in new tab */}
+                        {isValidExternalUrl(project.liveDemo) && (
+                          <a
+                            href={formatExternalUrl(project.liveDemo)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 border border-white/10 hover:border-orange-500/40 bg-white/5 hover:bg-orange-500/10 text-white/70 hover:text-orange-400 rounded-xl text-[9px] font-mono font-bold flex items-center gap-1 transition-all"
+                            title="Launch live site in new tab"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">LIVE</span>
+                          </a>
+                        )}
 
                         {/* Duplicate */}
                         <button

@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { X, Github, ExternalLink, ShieldCheck, ArrowRight, Lightbulb, TrendingUp } from 'lucide-react';
 import { Project } from '../types';
+import { formatExternalUrl, isValidExternalUrl } from '../lib/urlHelper';
 
 interface CaseStudyModalProps {
   project: Project;
@@ -67,20 +68,28 @@ export default function CaseStudyModal({ project, onClose }: CaseStudyModalProps
             </div>
 
             <div className="flex items-center gap-3">
-              <a
-                href={project.github}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-2 border border-luxury-border bg-black/50 hover:bg-zinc-900 font-mono text-[9px] font-extrabold tracking-widest px-4.5 py-3 rounded-full transition-colors"
-              >
-                <Github className="w-4 h-4" /> SOURCE CODE
-              </a>
-              <a
-                href={project.liveDemo}
-                className="flex items-center gap-2 bg-gradient-to-r from-gold-500 to-gold-600 text-luxury-black hover:from-gold-600 hover:to-gold-700 font-mono text-[9px] font-extrabold tracking-widest px-4.5 py-3 rounded-full transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" /> LIVE DEMO
-              </a>
+              {isValidExternalUrl(project.github) && (
+                <a
+                  href={formatExternalUrl(project.github)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 border border-luxury-border bg-black/50 hover:bg-zinc-900 font-mono text-[9px] font-extrabold tracking-widest px-4.5 py-3 rounded-full transition-colors text-white"
+                  title="View Source on GitHub (Opens in new tab)"
+                >
+                  <Github className="w-4 h-4" /> SOURCE CODE
+                </a>
+              )}
+              {isValidExternalUrl(project.liveDemo) && (
+                <a
+                  href={formatExternalUrl(project.liveDemo)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 font-mono text-[9px] font-extrabold tracking-widest px-4.5 py-3 rounded-full transition-all shadow-lg hover:scale-105"
+                  title="Launch Live Project in New Tab"
+                >
+                  <ExternalLink className="w-4 h-4" /> LIVE DEMO
+                </a>
+              )}
             </div>
           </div>
 
@@ -190,6 +199,29 @@ export default function CaseStudyModal({ project, onClose }: CaseStudyModalProps
               ))}
             </div>
           </div>
+
+          {/* Bottom Live Demo CTA - Opens in new tab */}
+          {isValidExternalUrl(project.liveDemo) && (
+            <div className="mt-2 pt-6 border-t border-luxury-border/50 flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent border border-orange-500/20">
+              <div>
+                <h4 className="text-white font-bold text-sm uppercase tracking-wider font-mono">
+                  Explore Live Deployment
+                </h4>
+                <p className="text-zinc-400 text-xs mt-0.5">
+                  Launch the interactive production system in a new browser tab.
+                </p>
+              </div>
+              <a
+                href={formatExternalUrl(project.liveDemo)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-mono text-xs font-black tracking-widest px-6 py-3 rounded-full transition-all shadow-xl hover:scale-105 shrink-0"
+              >
+                <span>LAUNCH PROJECT</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+          )}
 
         </div>
 

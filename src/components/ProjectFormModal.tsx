@@ -619,14 +619,17 @@ export default function ProjectFormModal({ project, onClose, onSave }: ProjectFo
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-[9px] font-mono font-bold tracking-widest text-white/40 uppercase">
-                LIVE DEMO URL
-              </label>
+              <div className="flex justify-between items-center">
+                <label className="text-[9px] font-mono font-bold tracking-widest text-white/40 uppercase">
+                  LIVE DEMO URL
+                </label>
+                <span className="text-[8px] font-mono text-orange-400/80">Opens in new tab</span>
+              </div>
               <input
                 type="text"
                 value={liveDemo}
                 onChange={(e) => setLiveDemo(e.target.value)}
-                placeholder="e.g. https://... or #"
+                placeholder="e.g. https://myproject.vercel.app"
                 className="w-full p-3 bg-white/5 border border-white/10 focus:border-orange-500/40 rounded-xl text-xs font-sans outline-none transition-all placeholder:text-white/20"
               />
             </div>
