@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, MouseEvent } from 'react';
 import { ArrowUp, Github, Linkedin, Mail, ShieldCheck } from 'lucide-react';
 
 // Custom SVG Icons for Behance and Facebook matching Lucide aesthetic
@@ -42,8 +42,22 @@ export function FacebookIcon({ className }: { className?: string }) {
   );
 }
 
-export default function Footer() {
+interface FooterProps {
+  onNavigateSection?: (href: string) => void;
+}
+
+export default function Footer({ onNavigateSection }: FooterProps) {
   const [timeStr, setTimeStr] = useState<string>('');
+
+  const handleLinkClick = (e: MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    if (onNavigateSection) {
+      onNavigateSection(href);
+    } else {
+      const el = document.querySelector(href);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
     const updateTime = () => {
@@ -107,22 +121,22 @@ export default function Footer() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
             <div className="flex flex-col gap-2.5 text-left text-xs font-sans">
               <span className="font-mono text-[9px] font-bold text-white/40 uppercase tracking-widest">NAVIGATION</span>
-              <a href="#hero" className="text-white/60 hover:text-orange-400 transition-colors">Home</a>
-              <a href="#about" className="text-white/60 hover:text-orange-400 transition-colors">About</a>
-              <a href="#projects" className="text-white/60 hover:text-orange-400 transition-colors">Projects</a>
-              <a href="#ai-studio" className="text-white/60 hover:text-orange-400 transition-colors">AI Studio</a>
+              <a href="#hero" onClick={(e) => handleLinkClick(e, '#hero')} className="text-white/60 hover:text-orange-400 transition-colors">Home</a>
+              <a href="#about" onClick={(e) => handleLinkClick(e, '#about')} className="text-white/60 hover:text-orange-400 transition-colors">About</a>
+              <a href="#projects" onClick={(e) => handleLinkClick(e, '#projects')} className="text-white/60 hover:text-orange-400 transition-colors">Projects</a>
+              <a href="#ai-studio" onClick={(e) => handleLinkClick(e, '#ai-studio')} className="text-white/60 hover:text-orange-400 transition-colors">AI Studio</a>
             </div>
             <div className="flex flex-col gap-2.5 text-left text-xs font-sans">
               <span className="font-mono text-[9px] font-bold text-white/40 uppercase tracking-widest">CATEGORIES</span>
-              <a href="#skills" className="text-white/60 hover:text-orange-400 transition-colors">Expertise</a>
-              <a href="#experience" className="text-white/60 hover:text-orange-400 transition-colors">Chronicle</a>
-              <a href="#services" className="text-white/60 hover:text-orange-400 transition-colors">Services</a>
+              <a href="#skills" onClick={(e) => handleLinkClick(e, '#skills')} className="text-white/60 hover:text-orange-400 transition-colors">Expertise</a>
+              <a href="#experience" onClick={(e) => handleLinkClick(e, '#experience')} className="text-white/60 hover:text-orange-400 transition-colors">Chronicle</a>
+              <a href="#services" onClick={(e) => handleLinkClick(e, '#services')} className="text-white/60 hover:text-orange-400 transition-colors">Services</a>
             </div>
             <div className="flex flex-col gap-2.5 text-left text-xs font-sans">
               <span className="font-mono text-[9px] font-bold text-white/40 uppercase tracking-widest">UTILITIES</span>
-              <a href="#testimonials" className="text-white/60 hover:text-orange-400 transition-colors">Testimonial</a>
-              <a href="#certifications" className="text-white/60 hover:text-orange-400 transition-colors">Certifications</a>
-              <a href="#contact" className="text-white/60 hover:text-orange-400 transition-colors">Contact</a>
+              <a href="#testimonials" onClick={(e) => handleLinkClick(e, '#testimonials')} className="text-white/60 hover:text-orange-400 transition-colors">Testimonial</a>
+              <a href="#certifications" onClick={(e) => handleLinkClick(e, '#certifications')} className="text-white/60 hover:text-orange-400 transition-colors">Certifications</a>
+              <a href="#contact" onClick={(e) => handleLinkClick(e, '#contact')} className="text-white/60 hover:text-orange-400 transition-colors">Contact</a>
             </div>
           </div>
 

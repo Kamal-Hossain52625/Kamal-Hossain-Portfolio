@@ -16,6 +16,7 @@
         "demoUrl": { "type": "string" },
         "githubUrl": { "type": "string" },
         "isFeatured": { "type": "boolean" },
+        "showOnHome": { "type": "boolean" },
         "description": { "type": "string" },
         "challenges": { "type": "string" },
         "solutions": { "type": "string" },

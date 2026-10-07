@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { X, Sparkles, Info, AlertCircle, Save, Plus, Image as ImageIcon, Upload, Link as LinkIcon, Trash2, Check } from 'lucide-react';
+import { X, Sparkles, Info, AlertCircle, Save, Plus, Image as ImageIcon, Upload, Link as LinkIcon, Trash2, Check, Smartphone } from 'lucide-react';
 import { Project } from '../types';
 
 interface ProjectFormModalProps {
@@ -96,6 +96,9 @@ export default function ProjectFormModal({ project, onClose, onSave }: ProjectFo
   const [features, setFeatures] = useState(project?.features?.join(', ') || '');
   const [github, setGithub] = useState(project?.github || '');
   const [liveDemo, setLiveDemo] = useState(project?.liveDemo || '');
+  const [showOnHome, setShowOnHome] = useState<boolean>(
+    project?.showOnHome !== undefined ? project.showOnHome : true
+  );
 
   // Image & Live Preview State
   const [image, setImage] = useState(
@@ -257,6 +260,8 @@ export default function ProjectFormModal({ project, onClose, onSave }: ProjectFo
       liveDemo: liveDemo.trim() || '#',
       github: github.trim() || 'https://github.com/Kamal-Hossain52625',
       category,
+      showOnHome,
+      isFeatured: showOnHome,
       caseStudy: {
         challenge,
         solution,
@@ -350,6 +355,31 @@ export default function ProjectFormModal({ project, onClose, onSave }: ProjectFo
                 <option value="Creative">Creative</option>
               </select>
             </div>
+          </div>
+
+          {/* Mobile Home Feed Visibility Toggle */}
+          <div className="flex items-center justify-between p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <Smartphone className="w-4 h-4 text-orange-400" /> SHOW ON MOBILE HOME FEED
+              </span>
+              <span className="text-[10px] text-white/50 font-sans">
+                {showOnHome ? 'Visible on Mobile Home Page. Visitors can also tap "PROJECTS" in the navbar to view all projects.' : 'Hidden from mobile home feed by default (only visible when tapping "PROJECTS" in navbar).'}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowOnHome(!showOnHome)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                showOnHome ? 'bg-orange-500' : 'bg-white/20'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  showOnHome ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
 
           {/* Subtitle */}

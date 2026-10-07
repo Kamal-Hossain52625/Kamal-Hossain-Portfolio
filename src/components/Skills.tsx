@@ -8,7 +8,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { skillCategoriesData } from '../data';
 import { Check, Cpu, Award, Zap, Server, ShieldCheck } from 'lucide-react';
 
-export default function Skills() {
+interface SkillsProps {
+  isVisibleOnMobile?: boolean;
+  onCloseMobile?: () => void;
+}
+
+export default function Skills({ isVisibleOnMobile = false, onCloseMobile }: SkillsProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('frontend');
   const activeCategory = skillCategoriesData.find((cat) => cat.id === selectedCategory) || skillCategoriesData[0];
 
@@ -28,7 +33,9 @@ export default function Skills() {
   return (
     <section 
       id="skills" 
-      className="relative py-28 bg-luxury-black border-t border-white/10 overflow-hidden bg-grid-pattern"
+      className={`relative py-28 bg-luxury-black border-t border-white/10 overflow-hidden bg-grid-pattern ${
+        isVisibleOnMobile ? 'block' : 'hidden md:block'
+      }`}
     >
       {/* Visual background lights */}
       <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-orange-600/5 rounded-full blur-[140px] pointer-events-none select-none z-0" />
@@ -36,6 +43,23 @@ export default function Skills() {
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
         
+        {/* Mobile Navigation Indicator */}
+        {isVisibleOnMobile && (
+          <div className="md:hidden mb-8 p-3 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-between">
+            <span className="text-[10px] font-mono font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5" /> NAVIGATED FROM MENU // TECH STACK
+            </span>
+            {onCloseMobile && (
+              <button
+                onClick={onCloseMobile}
+                className="text-[9px] font-mono bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-lg text-white/80 cursor-pointer"
+              >
+                COLLAPSE
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
           <div className="flex flex-col items-start gap-2">

@@ -189,6 +189,31 @@ export function deleteStoredProject(id: string): Project[] {
   return updated;
 }
 
+export function toggleProjectHomeStatus(id: string): Project[] {
+  const current = getStoredProjects();
+  let updatedValue = false;
+  const updated = current.map((p) => {
+    if (p.id === id) {
+      updatedValue = p.showOnHome === undefined ? false : !p.showOnHome;
+      return { ...p, showOnHome: updatedValue };
+    }
+    return p;
+  });
+  saveStoredProjects(updated);
+
+  // Sync to Firestore
+  (async () => {
+    try {
+      const docRef = doc(db, PROJECTS_COLLECTION, id);
+      await setDoc(docRef, { showOnHome: updatedValue }, { merge: true });
+    } catch (e) {
+      console.error('Failed to update project home status in Firestore:', e);
+    }
+  })();
+
+  return updated;
+}
+
 export function resetStoredProjects(): Project[] {
   saveStoredProjects(projectsData);
   // Re-seed to Firestore

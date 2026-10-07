@@ -9,7 +9,7 @@ import { Project } from '../types';
 import CaseStudyModal from './CaseStudyModal';
 import { getStoredProjects, subscribeToProjects } from '../lib/storage';
 import { formatExternalUrl, isValidExternalUrl } from '../lib/urlHelper';
-import { Github, ExternalLink, FileText, LayoutGrid, Layers, CircleDot } from 'lucide-react';
+import { Github, ExternalLink, FileText, LayoutGrid, Layers, CircleDot, ArrowDown, Sparkles, Smartphone, Check } from 'lucide-react';
 
 // Live interactive mockup for dynamically added custom projects
 function CustomDynamicMockup() {
@@ -293,10 +293,29 @@ function VectorMockup() {
   );
 }
 
-export default function Projects() {
+interface ProjectsProps {
+  showAllOnMobile?: boolean;
+  onToggleShowAllMobile?: (show: boolean) => void;
+}
+
+export default function Projects({
+  showAllOnMobile = false,
+  onToggleShowAllMobile
+}: ProjectsProps) {
   const [projects, setProjects] = useState<Project[]>(getStoredProjects);
   const [filter, setFilter] = useState<'All' | 'Full-stack' | 'Frontend' | 'System' | 'Creative'>('All');
   const [selectedCaseStudy, setSelectedCaseStudy] = useState<Project | null>(null);
+  const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  const [localShowAllMobile, setLocalShowAllMobile] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     // 1. Subscribe to Firestore real-time cloud updates
@@ -317,10 +336,21 @@ export default function Projects() {
     };
   }, []);
 
-  const filteredProjects = projects.filter((proj) => {
-    if (filter === 'All') return true;
-    return proj.category === filter;
+  const isShowingAll = showAllOnMobile || localShowAllMobile;
+
+  // Filter projects:
+  // On desktop: all projects matching category
+  // On mobile: if not showing all, only projects chosen for home page
+  const filteredProjects = projects.filter((proj, idx) => {
+    if (filter !== 'All' && proj.category !== filter) return false;
+
+    if (isMobile && !isShowingAll) {
+      return proj.showOnHome === true || (proj.showOnHome !== false && (proj.isFeatured === true || idx < 2));
+    }
+    return true;
   });
+
+  const hasMoreProjectsOnMobile = isMobile && !isShowingAll && projects.length > filteredProjects.length;
 
   const getMockupElement = (id: string, image?: string) => {
     if (image && (image.startsWith('http') || image.startsWith('data:image') || image.startsWith('/'))) {
@@ -395,6 +425,46 @@ export default function Projects() {
             </div>
           </div>
         </div>
+
+        {/* Mobile View Status indicator */}
+        {isMobile && (
+          <div className="mb-6">
+            {!isShowingAll ? (
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
+                  <span className="text-[10px] font-mono text-white/80 font-bold uppercase tracking-wider">
+                    CURATED HOME SELECTION ({filteredProjects.length})
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    if (onToggleShowAllMobile) onToggleShowAllMobile(true);
+                    else setLocalShowAllMobile(true);
+                  }}
+                  className="text-[9px] font-mono font-extrabold text-orange-400 hover:text-white bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 px-3 py-1.5 rounded-xl cursor-pointer uppercase transition-all"
+                >
+                  VIEW ALL ({projects.length})
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/20 backdrop-blur-md">
+                <span className="text-[10px] font-mono text-orange-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5" /> ALL {projects.length} PROJECTS DISPLAYED
+                </span>
+                <button
+                  onClick={() => {
+                    if (onToggleShowAllMobile) onToggleShowAllMobile(false);
+                    else setLocalShowAllMobile(false);
+                  }}
+                  className="text-[9px] font-mono bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-lg text-white/80 cursor-pointer uppercase"
+                >
+                  HOME ONLY
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Case Study Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
@@ -518,6 +588,25 @@ export default function Projects() {
             ))}
           </AnimatePresence>
         </div>
+
+        {/* Mobile Button to View All Projects if currently curated */}
+        {hasMoreProjectsOnMobile && (
+          <div className="md:hidden mt-8 flex flex-col items-center gap-2">
+            <button
+              onClick={() => {
+                if (onToggleShowAllMobile) onToggleShowAllMobile(true);
+                else setLocalShowAllMobile(true);
+              }}
+              className="w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-mono text-xs font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
+            >
+              <span>EXPLORE ALL {projects.length} PROJECTS</span>
+              <ArrowDown className="w-4 h-4 animate-bounce" />
+            </button>
+            <span className="text-[9px] font-mono text-white/40 tracking-wider">
+              Tap to expand full portfolio archive
+            </span>
+          </div>
+        )}
 
       </div>
 

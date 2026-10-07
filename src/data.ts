@@ -28,6 +28,8 @@ export const projectsData: Project[] = [
     liveDemo: '#',
     github: 'https://github.com/Kamal-Hossain52625/synthetix-cloud',
     category: 'Full-stack',
+    showOnHome: true,
+    isFeatured: true,
     caseStudy: {
       challenge: 'Handling massive telemetry updates from multiple microservices caused severe React render-blocking, drop in frame rates (down to 15 FPS), and UI crashes during high load spikes.',
       solution: 'Decoupled state management from React’s standard reconciliation engine. Utilized Web Workers to parse binary socket streams and rendered the metrics on a lightweight HTML5 Canvas with custom D3-driven matrix buffers, maintaining a solid 60 FPS.',
@@ -60,6 +62,8 @@ export const projectsData: Project[] = [
     liveDemo: '#',
     github: 'https://github.com/Kamal-Hossain52625/aura-commerce',
     category: 'Frontend',
+    showOnHome: true,
+    isFeatured: true,
     caseStudy: {
       challenge: 'Standard e-commerce page transitions and heavy image rendering led to visual stuttering, causing user drop-off on product exploration and sluggish cart operations.',
       solution: 'Implemented visual skeleton loaders, responsive image source matrices, pre-fetched route states using local service workers, and engineered smooth spring-physics based swipe gestures for product view cards.',
@@ -92,6 +96,8 @@ export const projectsData: Project[] = [
     liveDemo: '#',
     github: 'https://github.com/Kamal-Hossain52625/vortex-gateway',
     category: 'System',
+    showOnHome: false,
+    isFeatured: false,
     caseStudy: {
       challenge: 'Distributed microservices suffered from credential parsing delays and rate limit synchronization failures across global deployments, leading to unauthorized leaks and 504 errors.',
       solution: 'Re-architected the rate-limiting module to use atomic Redis Lua scripts, and established a cache-aside structure for public authentication keys, drastically reducing inter-cluster handshakes.',
@@ -124,6 +130,8 @@ export const projectsData: Project[] = [
     liveDemo: '#',
     github: 'https://github.com/Kamal-Hossain52625/apex-canvas',
     category: 'Creative',
+    showOnHome: false,
+    isFeatured: false,
     caseStudy: {
       challenge: 'Handling dense vector calculations (thousands of curves and nodes) in JavaScript triggered severe canvas layout updates and lagging selection bounding boxes.',
       solution: 'Implemented spatial partitioning (Quadtree) to optimize raycasting, query select shapes under the cursor instantaneously, and wrapped rendering loops in optimized RequestAnimationFrame pipelines.',

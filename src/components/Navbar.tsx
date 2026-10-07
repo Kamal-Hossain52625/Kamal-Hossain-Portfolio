@@ -17,7 +17,11 @@ const navLinks = [
   { label: 'CONTACT', href: '#contact' },
 ];
 
-export default function Navbar() {
+interface NavbarProps {
+  onNavigateSection?: (href: string) => void;
+}
+
+export default function Navbar({ onNavigateSection }: NavbarProps) {
   const [activeSection, setActiveSection] = useState('hero');
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -88,9 +92,13 @@ export default function Navbar() {
 
   const handleNavClick = (href: string) => {
     setMobileMenuOpen(false);
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    if (onNavigateSection) {
+      onNavigateSection(href);
+    } else {
+      const element = document.querySelector(href);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 

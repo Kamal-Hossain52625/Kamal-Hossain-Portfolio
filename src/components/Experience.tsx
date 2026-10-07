@@ -6,17 +6,41 @@
 import { experienceData } from '../data';
 import { Calendar, MapPin, Briefcase, ChevronRight, GraduationCap } from 'lucide-react';
 
-export default function Experience() {
+interface ExperienceProps {
+  isVisibleOnMobile?: boolean;
+  onCloseMobile?: () => void;
+}
+
+export default function Experience({ isVisibleOnMobile = false, onCloseMobile }: ExperienceProps) {
   return (
     <section 
       id="experience" 
-      className="relative py-28 bg-luxury-black border-t border-white/10 overflow-hidden bg-grid-pattern"
+      className={`relative py-28 bg-luxury-black border-t border-white/10 overflow-hidden bg-grid-pattern ${
+        isVisibleOnMobile ? 'block' : 'hidden md:block'
+      }`}
     >
       <div className="absolute top-1/3 right-1/4 w-[350px] h-[350px] bg-blue-600/5 rounded-full blur-[100px] pointer-events-none select-none z-0" />
       <div className="absolute bottom-1/4 left-1/4 w-[300px] h-[300px] bg-orange-600/5 rounded-full blur-[100px] pointer-events-none select-none z-0" />
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
         
+        {/* Mobile Navigation Indicator */}
+        {isVisibleOnMobile && (
+          <div className="md:hidden mb-8 p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-between">
+            <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Briefcase className="w-3.5 h-3.5" /> NAVIGATED FROM MENU // CHRONICLE
+            </span>
+            {onCloseMobile && (
+              <button
+                onClick={onCloseMobile}
+                className="text-[9px] font-mono bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-lg text-white/80 cursor-pointer"
+              >
+                COLLAPSE
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Section Header */}
         <div className="flex flex-col items-start gap-2 mb-16">
           <span className="font-mono text-[10px] tracking-[0.3em] text-orange-500 font-extrabold uppercase">

@@ -32,7 +32,8 @@ import {
   Settings,
   FolderGit2,
   Camera,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Smartphone
 } from 'lucide-react';
 import { Project, Inquiry } from '../types';
 import {
@@ -41,6 +42,7 @@ import {
   addStoredProject,
   updateStoredProject,
   deleteStoredProject,
+  toggleProjectHomeStatus,
   resetStoredProjects,
   subscribeToProjects,
   subscribeToInquiries,
@@ -186,6 +188,11 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
+  };
+
+  const handleToggleHome = (id: string) => {
+    const updated = toggleProjectHomeStatus(id);
+    setProjects(updated);
   };
 
   const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -544,6 +551,19 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
                           {project.category} // ARCHITECTURE
                         </span>
                         <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleHome(project.id)}
+                            className={`px-2.5 py-1 rounded-full text-[8px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                              project.showOnHome !== false
+                                ? 'bg-orange-500/20 text-orange-400 border border-orange-500/40 hover:bg-orange-500/30'
+                                : 'bg-white/5 text-white/40 border border-white/10 hover:text-white hover:bg-white/10'
+                            }`}
+                            title="Toggle whether this project is displayed on the mobile home page"
+                          >
+                            <Smartphone className="w-2.5 h-2.5" />
+                            <span>{project.showOnHome !== false ? 'HOME: ACTIVE' : 'HOME: HIDDEN'}</span>
+                          </button>
                           <span
                             className={`w-1.5 h-1.5 rounded-full ${
                               project.id.startsWith('custom-') ? 'bg-orange-400 animate-pulse' : 'bg-emerald-400'

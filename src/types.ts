@@ -16,6 +16,8 @@ export interface Project {
   liveDemo: string;
   github: string;
   category: 'Full-stack' | 'Frontend' | 'System' | 'Creative';
+  showOnHome?: boolean;
+  isFeatured?: boolean;
   caseStudy: {
     challenge: string;
     solution: string;
