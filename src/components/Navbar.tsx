@@ -14,6 +14,7 @@ const navLinks = [
   { label: 'PROJECTS', href: '#projects' },
   { label: 'EXPERIENCE', href: '#experience' },
   { label: 'SERVICES', href: '#services' },
+  { label: 'CERTS', href: '#certifications' },
   { label: 'CONTACT', href: '#contact' },
 ];
 
@@ -137,7 +138,7 @@ export default function Navbar({ onNavigateSection }: NavbarProps) {
           </a>
 
           {/* Center Navigation Links: Desktop */}
-          <nav className="hidden lg:flex items-center gap-8 bg-white/5 border border-white/10 px-8 py-2.5 rounded-full backdrop-blur-xl shadow-lg">
+          <nav className="hidden lg:flex items-center gap-5 xl:gap-7 bg-white/5 border border-white/10 px-6 xl:px-8 py-2.5 rounded-full backdrop-blur-xl shadow-lg">
             {navLinks.map((link) => {
               const targetId = link.href.replace('#', '');
               const isActive = activeSection === targetId;

@@ -7,35 +7,48 @@ import { experienceData } from '../data';
 import { Calendar, MapPin, Briefcase, ChevronRight, GraduationCap } from 'lucide-react';
 
 interface ExperienceProps {
+  isVisible?: boolean;
+  onClose?: () => void;
+  // Backward compatibility
   isVisibleOnMobile?: boolean;
   onCloseMobile?: () => void;
 }
 
-export default function Experience({ isVisibleOnMobile = false, onCloseMobile }: ExperienceProps) {
+export default function Experience({ 
+  isVisible = false, 
+  onClose,
+  isVisibleOnMobile,
+  onCloseMobile 
+}: ExperienceProps) {
+  const effectiveVisible = typeof isVisible === 'boolean' ? isVisible : Boolean(isVisibleOnMobile);
+  const handleClose = onClose || onCloseMobile;
+
   return (
     <section 
       id="experience" 
       className={`relative py-28 bg-luxury-black border-t border-white/10 overflow-hidden bg-grid-pattern ${
-        isVisibleOnMobile ? 'block' : 'hidden md:block'
+        effectiveVisible ? 'block' : 'hidden'
       }`}
+      style={{ display: effectiveVisible ? 'block' : 'none' }}
     >
       <div className="absolute top-1/3 right-1/4 w-[350px] h-[350px] bg-blue-600/5 rounded-full blur-[100px] pointer-events-none select-none z-0" />
       <div className="absolute bottom-1/4 left-1/4 w-[300px] h-[300px] bg-orange-600/5 rounded-full blur-[100px] pointer-events-none select-none z-0" />
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
         
-        {/* Mobile Navigation Indicator */}
-        {isVisibleOnMobile && (
-          <div className="md:hidden mb-8 p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-between">
+        {/* Navigation Indicator / Dismiss Bar */}
+        {effectiveVisible && (
+          <div className="mb-10 p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/25 flex items-center justify-between backdrop-blur-md">
             <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Briefcase className="w-3.5 h-3.5" /> NAVIGATED FROM MENU // CHRONICLE
+              <Briefcase className="w-3.5 h-3.5" /> NAVIGATED FROM NAVBAR // CAREER CHRONICLE & JOURNEY
             </span>
-            {onCloseMobile && (
+            {handleClose && (
               <button
-                onClick={onCloseMobile}
-                className="text-[9px] font-mono bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-lg text-white/80 cursor-pointer"
+                onClick={handleClose}
+                className="text-[9px] font-mono bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg text-white/90 hover:text-white transition-all cursor-pointer font-bold flex items-center gap-1"
+                aria-label="Hide Experience section"
               >
-                COLLAPSE
+                HIDE SECTION ✕
               </button>
             )}
           </div>

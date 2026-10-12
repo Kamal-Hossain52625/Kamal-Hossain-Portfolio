@@ -8,11 +8,22 @@ import { Layout, Cpu, Layers, ArrowRight, ShieldAlert, HeartHandshake } from 'lu
 
 interface ServicesProps {
   onSelectService: (serviceTitle: string) => void;
+  isVisible?: boolean;
+  onClose?: () => void;
+  // Backward compatibility
   isVisibleOnMobile?: boolean;
   onCloseMobile?: () => void;
 }
 
-export default function Services({ onSelectService, isVisibleOnMobile = false, onCloseMobile }: ServicesProps) {
+export default function Services({ 
+  onSelectService, 
+  isVisible = false, 
+  onClose,
+  isVisibleOnMobile,
+  onCloseMobile 
+}: ServicesProps) {
+  const effectiveVisible = typeof isVisible === 'boolean' ? isVisible : Boolean(isVisibleOnMobile);
+  const handleClose = onClose || onCloseMobile;
   
   const getIcon = (iconName: string) => {
     switch (iconName) {
@@ -39,26 +50,28 @@ export default function Services({ onSelectService, isVisibleOnMobile = false, o
     <section 
       id="services" 
       className={`relative py-28 bg-luxury-black border-t border-white/10 overflow-hidden ${
-        isVisibleOnMobile ? 'block' : 'hidden md:block'
+        effectiveVisible ? 'block' : 'hidden'
       }`}
+      style={{ display: effectiveVisible ? 'block' : 'none' }}
     >
       <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[350px] h-[350px] bg-orange-600/5 rounded-full blur-[100px] pointer-events-none select-none z-0" />
       <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-blue-600/5 rounded-full blur-[100px] pointer-events-none select-none z-0" />
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
         
-        {/* Mobile Navigation Indicator */}
-        {isVisibleOnMobile && (
-          <div className="md:hidden mb-8 p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-between">
+        {/* Navigation Indicator / Dismiss Bar */}
+        {effectiveVisible && (
+          <div className="mb-10 p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-between backdrop-blur-md">
             <span className="text-[10px] font-mono font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Layout className="w-3.5 h-3.5" /> NAVIGATED FROM MENU // SERVICES
+              <Layout className="w-3.5 h-3.5" /> NAVIGATED FROM NAVBAR // ARCHITECTURE & CLIENT SERVICES
             </span>
-            {onCloseMobile && (
+            {handleClose && (
               <button
-                onClick={onCloseMobile}
-                className="text-[9px] font-mono bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-lg text-white/80 cursor-pointer"
+                onClick={handleClose}
+                className="text-[9px] font-mono bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg text-white/90 hover:text-white transition-all cursor-pointer font-bold flex items-center gap-1"
+                aria-label="Hide Services section"
               >
-                COLLAPSE
+                HIDE SECTION ✕
               </button>
             )}
           </div>

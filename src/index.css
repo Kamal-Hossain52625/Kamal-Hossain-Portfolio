@@ -44,6 +44,53 @@
   50% { background-position: 100% 50%; }
 }
 
+/* Orbit Dual-Ring Keyframes */
+@keyframes orbit-cw {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbit-ccw {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.animate-orbit-inner {
+  animation: orbit-cw 24s linear infinite;
+  transform-origin: center center;
+}
+
+.animate-orbit-inner-counter {
+  animation: orbit-ccw 24s linear infinite;
+  transform-origin: center center;
+}
+
+.animate-orbit-outer {
+  animation: orbit-ccw 36s linear infinite;
+  transform-origin: center center;
+}
+
+.animate-orbit-outer-counter {
+  animation: orbit-cw 36s linear infinite;
+  transform-origin: center center;
+}
+
+/* Pause animation on hover */
+.orbit-system:hover .animate-orbit-inner,
+.orbit-system:hover .animate-orbit-inner-counter,
+.orbit-system:hover .animate-orbit-outer,
+.orbit-system:hover .animate-orbit-outer-counter {
+  animation-play-state: paused;
+}
+
 html {
   scroll-behavior: smooth;
   background-color: #050505;

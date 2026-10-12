@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldAlert, ShieldCheck, HeartHandshake, Code, LayoutDashboard, Cpu } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, HeartHandshake, Code, LayoutDashboard, Cpu, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { getStoredProfileImage, subscribeToProfileImage } from '../lib/storage';
 
 interface ManifestoItem {
@@ -64,9 +64,26 @@ const manifestoItems: ManifestoItem[] = [
   }
 ];
 
-export default function About() {
+export default function About({
+  isExpandedOnMobile,
+  onToggleExpandMobile,
+}: {
+  isExpandedOnMobile?: boolean;
+  onToggleExpandMobile?: (expanded: boolean) => void;
+} = {}) {
   const [activeManifesto, setActiveManifesto] = useState<string>('visual-noise');
   const activeItem = manifestoItems.find((item) => item.id === activeManifesto) || manifestoItems[0];
+
+  // Mobile collapse / expand state: default to false (compact / less mode)
+  const [internalExpandedMobile, setInternalExpandedMobile] = useState<boolean>(false);
+  const isManifestoExpanded = isExpandedOnMobile !== undefined ? isExpandedOnMobile : internalExpandedMobile;
+
+  const handleToggleManifesto = (expanded: boolean) => {
+    setInternalExpandedMobile(expanded);
+    if (onToggleExpandMobile) {
+      onToggleExpandMobile(expanded);
+    }
+  };
 
   // Profile image (controlled centrally via Admin Panel)
   const [profileImage, setProfileImage] = useState<string>(getStoredProfileImage);
@@ -118,21 +135,21 @@ export default function About() {
             </h3>
             
             <p className="font-sans text-white/60 text-sm md:text-base leading-relaxed tracking-wide font-light">
-              Over the last 2 years, I have engineered full-stack architectures and crafted high-end creative interfaces for clients globally. My philosophy is simple: **every line of code should run at maximum performance, and every pixel should carry artistic intent.**
+              Over the last 5 years, I have engineered full-stack architectures and crafted high-end creative interfaces for clients globally. My philosophy is simple: **every line of code should run at maximum performance, and every pixel should carry artistic intent.**
             </p>
             
             <p className="font-sans text-white/60 text-sm md:text-base leading-relaxed tracking-wide font-light">
-              I avoid standard templates. Instead, I build modular, highly polished ecosystems using modern front-end layers (React, PHP, Ajax, JavaScript, TypeScript, Tailwind, and Motion) coupled with resilient background backends (Node.js, Laravel, jQuery, PostgreSQL, Redis, and Cloud setups).
+              I avoid standard templates. Instead, I build modular, highly polished ecosystems using modern front-end layers (React, TypeScript, Tailwind, and Motion) coupled with resilient background backends (Node.js, Express, PostgreSQL, Redis, and Cloud setups).
             </p>
 
             <div className="grid grid-cols-2 gap-4 mt-4 font-mono">
               <div className="p-4 border border-white/10 rounded-xl bg-white/5 backdrop-blur-md">
                 <span className="text-white/40 text-[10px] uppercase tracking-wider block mb-1">CURRENT LOCATION</span>
-                <span className="text-white text-xs font-semibold">Mirpur, Dhaka, Bangladesh (Remote Enabled)</span>
+                <span className="text-white text-xs font-semibold">Berlin, Germany (Remote Enabled)</span>
               </div>
               <div className="p-4 border border-white/10 rounded-xl bg-white/5 backdrop-blur-md">
                 <span className="text-white/40 text-[10px] uppercase tracking-wider block mb-1">INTERESTS</span>
-                <span className="text-white text-xs font-semibold">Generative Art, Softwere Build, System Security, UI Motion</span>
+                <span className="text-white text-xs font-semibold">Generative Art, System Security, UI Motion</span>
               </div>
             </div>
           </div>
@@ -185,7 +202,7 @@ export default function About() {
                 </div>
                 <div className="flex justify-between items-center border-b border-white/5 pb-2.5">
                   <span className="text-xs text-white/40">Role</span>
-                  <span className="text-xs font-semibold text-orange-400">Lead Full-Stack Laravel Developer</span>
+                  <span className="text-xs font-semibold text-orange-400">Lead Full-Stack Architect</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-white/5 pb-2.5">
                   <span className="text-xs text-white/40">Available Email</span>
@@ -207,86 +224,244 @@ export default function About() {
         </div>
 
         {/* Dynamic UI/UX Audit & Manifesto Panel (CRITICAL REQUIREMENT) */}
-        <div className="border border-white/10 bg-white/5 backdrop-blur-2xl rounded-3xl p-6 md:p-10 relative shadow-2xl">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-8 mb-8">
+        <div id="manifesto-panel" className="border border-white/10 bg-white/5 backdrop-blur-2xl rounded-3xl p-6 md:p-10 relative shadow-2xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-8 mb-6 md:mb-8">
             <div>
-              <span className="text-orange-500 font-mono text-[9px] tracking-widest uppercase block mb-1">INTERACTIVE AUDIT BOARD</span>
-              <h3 className="font-sans text-2xl md:text-3xl text-white font-bold tracking-tight uppercase italic">
-                Senior UI/UX Manifesto
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-orange-500 font-mono text-[9px] tracking-widest uppercase">INTERACTIVE AUDIT BOARD</span>
+                {/* Mobile mode indicator chip */}
+                <span className="md:hidden text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border bg-white/5 text-orange-400 border-orange-500/30">
+                  {isManifestoExpanded ? 'FULL VIEW' : 'COMPACT VIEW'}
+                </span>
+              </div>
+              <h3 className="font-sans text-2xl md:text-3xl text-white font-bold tracking-tight uppercase italic flex items-center gap-3">
+                <span>Senior UI/UX Manifesto</span>
               </h3>
               <p className="text-white/40 text-xs mt-1">
                 Comparing common industry bad practices with my refined, production-ready methodologies.
               </p>
             </div>
 
-            {/* Selector Pills */}
-            <div className="flex flex-wrap gap-2">
+            {/* Desktop & Expanded Selector Pills */}
+            <div className="flex flex-wrap items-center gap-2">
               {manifestoItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveManifesto(item.id)}
+                  onClick={() => {
+                    setActiveManifesto(item.id);
+                  }}
                   className={`px-4 py-2 text-[9px] font-mono tracking-widest font-bold rounded-lg uppercase cursor-pointer border transition-all ${
                     activeManifesto === item.id 
-                      ? 'bg-white/10 text-white border-white/20' 
+                      ? 'bg-white/10 text-white border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.08)]' 
                       : 'bg-transparent text-white/40 border-white/10 hover:border-white/20 hover:text-white/80'
                   }`}
                 >
                   {item.topic}
                 </button>
               ))}
+
+              {/* Quick toggle chip on mobile */}
+              <button
+                onClick={() => handleToggleManifesto(!isManifestoExpanded)}
+                className="md:hidden ml-auto px-3 py-2 text-[9px] font-mono font-bold uppercase rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400 flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
+              >
+                {isManifestoExpanded ? (
+                  <>LESS <ChevronUp className="w-3 h-3" /></>
+                ) : (
+                  <>EXPAND <ChevronDown className="w-3 h-3" /></>
+                )}
+              </button>
             </div>
           </div>
 
-          {/* Render Audit Comparative Columns */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeManifesto}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              transition={{ duration: 0.3 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch"
-            >
-              {/* Bad Practice Column */}
-              <div className="border border-rose-500/10 bg-rose-950/5 p-6 rounded-xl flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2 text-rose-400 font-mono text-[10px] tracking-wider uppercase mb-4">
-                    <ShieldAlert className="w-4 h-4 shrink-0" />
-                    COMMON BAD DECISION
+          {/* ========================================================= */}
+          {/* DESKTOP VIEW: Always shows full side-by-side audit        */}
+          {/* ========================================================= */}
+          <div className="hidden md:block">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeManifesto}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.3 }}
+                className="grid grid-cols-2 gap-8 items-stretch"
+              >
+                {/* Bad Practice Column */}
+                <div className="border border-rose-500/10 bg-rose-950/5 p-6 rounded-xl flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-rose-400 font-mono text-[10px] tracking-wider uppercase mb-4">
+                      <ShieldAlert className="w-4 h-4 shrink-0" />
+                      COMMON BAD DECISION
+                    </div>
+                    <h4 className="font-sans text-base font-bold text-rose-100 mb-2">
+                      {activeItem.badPractice.title}
+                    </h4>
+                    <p className="font-sans text-xs text-white/60 leading-relaxed">
+                      {activeItem.badPractice.description}
+                    </p>
                   </div>
-                  <h4 className="font-sans text-base font-bold text-rose-100 mb-2">
-                    {activeItem.badPractice.title}
-                  </h4>
-                  <p className="font-sans text-xs text-white/60 leading-relaxed">
-                    {activeItem.badPractice.description}
-                  </p>
+                  <div className="mt-6 text-[9px] font-mono text-rose-500/60 font-semibold">
+                    STATUS: REJECTED & PURGED
+                  </div>
                 </div>
-                <div className="mt-6 text-[9px] font-mono text-rose-500/60 font-semibold">
-                  STATUS: REJECTED & PURGED
-                </div>
-              </div>
 
-              {/* Good Practice Column */}
-              <div className="border border-emerald-500/15 bg-emerald-950/5 p-6 rounded-xl flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2 text-emerald-400 font-mono text-[10px] tracking-wider uppercase mb-4">
-                    <ShieldCheck className="w-4 h-4 shrink-0" />
-                    MY RE-ENGINEERED STANDARD
+                {/* Good Practice Column */}
+                <div className="border border-emerald-500/15 bg-emerald-950/5 p-6 rounded-xl flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-emerald-400 font-mono text-[10px] tracking-wider uppercase mb-4">
+                      <ShieldCheck className="w-4 h-4 shrink-0" />
+                      MY RE-ENGINEERED STANDARD
+                    </div>
+                    <h4 className="font-sans text-base font-bold text-emerald-100 mb-2">
+                      {activeItem.goodPractice.title}
+                    </h4>
+                    <p className="font-sans text-xs text-white/80 leading-relaxed">
+                      {activeItem.goodPractice.description}
+                    </p>
                   </div>
-                  <h4 className="font-sans text-base font-bold text-emerald-100 mb-2">
+                  <div className="mt-6 text-[9px] font-mono text-emerald-400 font-semibold flex items-center gap-1">
+                    <HeartHandshake className="w-3.5 h-3.5" />
+                    STATUS: PRODUCTION IMPLEMENTED
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* ========================================================= */}
+          {/* MOBILE VIEW: "Less" by default, Tap to Expand to show full */}
+          {/* ========================================================= */}
+          <div className="md:hidden flex flex-col gap-4">
+            {!isManifestoExpanded ? (
+              /* LESS STATE: Shows a compact summary preview with prominent TAP TO EXPAND button */
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between text-[10px] font-mono text-white/50 px-1">
+                  <span className="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" /> RE-ENGINEERED STANDARD PREVIEW
+                  </span>
+                  <span className="text-white/40">LESS MODE</span>
+                </div>
+
+                {/* Compact Good Standard Highlight Card */}
+                <div className="border border-emerald-500/20 bg-emerald-950/10 p-5 rounded-2xl relative overflow-hidden">
+                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                    <div className="flex items-center gap-1.5 text-emerald-400 font-mono text-[10px] uppercase font-bold tracking-wider">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>{activeItem.topic} STANDARD</span>
+                    </div>
+                    <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+                      PRODUCTION
+                    </span>
+                  </div>
+
+                  <h4 className="font-sans text-sm font-bold text-emerald-100 mb-1.5">
                     {activeItem.goodPractice.title}
                   </h4>
-                  <p className="font-sans text-xs text-white/80 leading-relaxed">
+                  <p className="font-sans text-xs text-white/70 line-clamp-2 leading-relaxed">
                     {activeItem.goodPractice.description}
                   </p>
                 </div>
-                <div className="mt-6 text-[9px] font-mono text-emerald-400 font-semibold flex items-center gap-1">
-                  <HeartHandshake className="w-3.5 h-3.5" />
-                  STATUS: PRODUCTION IMPLEMENTED
-                </div>
+
+                {/* High-visibility tactile TAP TO EXPAND Button */}
+                <button
+                  onClick={() => handleToggleManifesto(true)}
+                  className="w-full mt-2 py-4 px-4 rounded-2xl bg-gradient-to-r from-orange-500/20 via-white/5 to-orange-500/20 hover:from-orange-500/30 hover:to-orange-500/30 border border-orange-500/40 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-between shadow-[0_4px_20px_rgba(249,115,22,0.15)] active:scale-[0.98] transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Sparkles className="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform" />
+                    <span className="text-[11px] font-extrabold tracking-wider">
+                      VIEW FULL MANIFESTO AUDIT
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-orange-400 font-extrabold bg-orange-500/20 px-2.5 py-1 rounded-lg border border-orange-500/30 flex items-center gap-1">
+                    TAP TO EXPAND <ChevronDown className="w-3.5 h-3.5 animate-bounce" />
+                  </span>
+                </button>
+                <span className="text-[9px] font-mono text-white/40 text-center tracking-wider">
+                  Currently showing less • Tap to reveal comparative bad vs good design audits
+                </span>
               </div>
-            </motion.div>
-          </AnimatePresence>
+            ) : (
+              /* EXPANDED STATE: Full comparative audit columns + Show Less toggle */
+              <AnimatePresence>
+                <div className="flex flex-col gap-4">
+                  <div className="p-3 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5" /> FULL MANIFESTO UNLOCKED ({manifestoItems.length} TOPICS)
+                    </span>
+                    <button
+                      onClick={() => handleToggleManifesto(false)}
+                      className="text-[9px] font-mono bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-lg text-white/90 cursor-pointer font-bold flex items-center gap-1"
+                    >
+                      SHOW LESS <ChevronUp className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  <motion.div
+                    key={activeManifesto}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="flex flex-col gap-4"
+                  >
+                    {/* Bad Practice Column */}
+                    <div className="border border-rose-500/20 bg-rose-950/10 p-5 rounded-2xl">
+                      <div className="flex items-center gap-2 text-rose-400 font-mono text-[10px] tracking-wider uppercase mb-3">
+                        <ShieldAlert className="w-4 h-4 shrink-0" />
+                        COMMON BAD DECISION
+                      </div>
+                      <h4 className="font-sans text-sm font-bold text-rose-100 mb-2">
+                        {activeItem.badPractice.title}
+                      </h4>
+                      <p className="font-sans text-xs text-white/70 leading-relaxed">
+                        {activeItem.badPractice.description}
+                      </p>
+                      <div className="mt-4 text-[9px] font-mono text-rose-500/80 font-bold">
+                        STATUS: REJECTED & PURGED
+                      </div>
+                    </div>
+
+                    {/* Good Practice Column */}
+                    <div className="border border-emerald-500/20 bg-emerald-950/10 p-5 rounded-2xl">
+                      <div className="flex items-center gap-2 text-emerald-400 font-mono text-[10px] tracking-wider uppercase mb-3">
+                        <ShieldCheck className="w-4 h-4 shrink-0" />
+                        MY RE-ENGINEERED STANDARD
+                      </div>
+                      <h4 className="font-sans text-sm font-bold text-emerald-100 mb-2">
+                        {activeItem.goodPractice.title}
+                      </h4>
+                      <p className="font-sans text-xs text-white/80 leading-relaxed">
+                        {activeItem.goodPractice.description}
+                      </p>
+                      <div className="mt-4 text-[9px] font-mono text-emerald-400 font-bold flex items-center gap-1">
+                        <HeartHandshake className="w-3.5 h-3.5" />
+                        STATUS: PRODUCTION IMPLEMENTED
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Bottom Collapse Button */}
+                  <div className="mt-1 flex flex-col items-center gap-2">
+                    <button
+                      onClick={() => {
+                        handleToggleManifesto(false);
+                        const el = document.getElementById('manifesto-panel');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="w-full py-3.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-[0.98]"
+                    >
+                      <ChevronUp className="w-4 h-4 text-orange-400" />
+                      <span>SHOW LESS (COMPACT VIEW)</span>
+                    </button>
+                    <span className="text-[9px] font-mono text-white/40 tracking-wider">
+                      Viewing {activeItem.topic} audit • Tap to return to compact view
+                    </span>
+                  </div>
+                </div>
+              </AnimatePresence>
+            )}
+          </div>
 
         </div>
 
