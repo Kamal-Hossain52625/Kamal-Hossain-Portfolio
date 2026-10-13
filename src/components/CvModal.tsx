@@ -18,8 +18,24 @@ import {
   Clock,
   HardDrive
 } from 'lucide-react';
-import { CvDocument } from '../types';
-import { saveStoredCvDocument, triggerCvDownload } from '../lib/aboutStorage';
+interface CvDocument {
+  fileName: string;
+  fileSize: string;
+  uploadedAt: string;
+  pdfDataUrl: string;
+  isCustomUploaded?: boolean;
+}
+
+const saveStoredCvDocument = async (cv: CvDocument) => {
+  window.localStorage.setItem('portfolio_cv_document', JSON.stringify(cv));
+};
+
+const triggerCvDownload = (cv: CvDocument) => {
+  const link = window.document.createElement('a');
+  link.href = cv.pdfDataUrl;
+  link.download = cv.fileName;
+  link.click();
+};
 
 interface CvModalProps {
   isOpen: boolean;
@@ -82,7 +98,7 @@ export default function CvModal({
       };
 
       await saveStoredCvDocument(newCv);
-      onCvUpdated(newCv);
+      onCvUpdated?.(newCv);
       setIsUploading(false);
       setUploadSuccess(true);
 

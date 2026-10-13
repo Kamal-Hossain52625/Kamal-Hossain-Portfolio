@@ -26,15 +26,15 @@ import {
   X,
   Maximize2
 } from 'lucide-react';
-import { getStoredProfileImage, subscribeToProfileImage } from '../lib/storage';
 import {
+  getStoredProfileImage,
+  subscribeToProfileImage,
   getStoredAboutPhotos,
   subscribeToAboutPhotos,
   getStoredCvDocument,
   subscribeToCvDocument
-} from '../lib/aboutStorage';
-import { AboutWorkPhoto, CvDocument } from '../types';
-import CvModal from './CvModal';
+} from '../lib/storage';
+import { AboutWorkPhoto } from '../types';
 
 interface ManifestoItem {
   id: string;
@@ -121,7 +121,7 @@ export default function About({
   const [selectedLightboxPhoto, setSelectedLightboxPhoto] = useState<AboutWorkPhoto | null>(null);
 
   // Curriculum Vitae (CV) state - synced from storage/cloud
-  const [cvDoc, setCvDoc] = useState<CvDocument>(getStoredCvDocument);
+  const [cvDoc, setCvDoc] = useState(getStoredCvDocument);
   const [isCvModalOpen, setIsCvModalOpen] = useState(false);
 
   useEffect(() => {
@@ -850,15 +850,46 @@ export default function About({
           </div>
         )}
 
-        {/* Read-Only CV Viewer Modal (Upload and Download disabled on frontend) */}
+        {/* Read-Only CV Viewer Modal */}
         {isCvModalOpen && (
-          <CvModal
-            isOpen={isCvModalOpen}
-            onClose={() => setIsCvModalOpen(false)}
-            cv={cvDoc}
-            allowUpload={false}
-            allowDownload={false}
-          />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-xl"
+            onClick={() => setIsCvModalOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              onClick={(event) => event.stopPropagation()}
+              className="flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/15 bg-[#14141c] shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
+                <span className="truncate pr-4 font-mono text-sm text-white">{cvDoc.fileName}</span>
+                <button
+                  type="button"
+                  onClick={() => setIsCvModalOpen(false)}
+                  className="rounded-lg p-2 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                  aria-label="Close CV viewer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              {cvDoc.pdfDataUrl ? (
+                <iframe
+                  src={cvDoc.pdfDataUrl}
+                  title="Curriculum Vitae"
+                  className="min-h-0 flex-1 border-0 bg-white"
+                />
+              ) : (
+                <div className="flex flex-1 items-center justify-center font-mono text-sm text-white/50">
+                  No PDF uploaded
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </section>
