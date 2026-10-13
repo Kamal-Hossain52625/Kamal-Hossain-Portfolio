@@ -237,7 +237,10 @@ export default function ProjectFormModal({ project, onClose, onSave }: ProjectFo
       return;
     }
 
-    const techArray = techStack.split(',').map((item) => item.trim()).filter(Boolean);
+    const techArray = techStack
+      .split(/,\s*|\s+and\s+/i)
+      .map((item) => item.trim().replace(/^and\s+/i, '').replace(/\s+only$/i, ''))
+      .filter((item) => item.length > 0 && item.toLowerCase() !== 'and' && item !== '&');
     const featuresArray = features.split(',').map((item) => item.trim()).filter(Boolean);
     const resultsArray = results.trim()
       ? results.split(',').map((item) => item.trim()).filter(Boolean)

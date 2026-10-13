@@ -229,10 +229,23 @@ export default function Footer({ onNavigateSection }: FooterProps) {
             <ShieldCheck className="w-3.5 h-3.5 text-orange-400" />
             <span>© 2026 KAMAL HOSSAIN. PORTFOLIO CERTIFIED AUTHENTIC</span>
           </div>
-          <div className="flex gap-4">
+          <div className="flex items-center gap-3">
             <a href="#" className="hover:text-orange-400">TERMS OF TRANSMISSION</a>
             <span>//</span>
             <a href="#" className="hover:text-orange-400">COOKIE PREFERENCES</a>
+            <span>//</span>
+            <a
+              href="#admin"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.hash = '#admin';
+                window.dispatchEvent(new HashChangeEvent('hashchange'));
+              }}
+              className="text-white/30 hover:text-orange-400 transition-colors uppercase"
+              title="Admin Backend Login & Management"
+            >
+              ADMIN PORTAL
+            </a>
           </div>
         </div>
 

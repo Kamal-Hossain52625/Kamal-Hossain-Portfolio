@@ -21,6 +21,7 @@ import Contact from './components/Contact';
 import Footer from './components/Footer';
 import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
+import ScrollDownButton from './components/ScrollDownButton';
 import { isUserAdmin } from './lib/storage';
 import { Zap, Briefcase, Layout, Award, ChevronDown } from 'lucide-react';
 
@@ -279,6 +280,9 @@ export default function App() {
 
           {/* Brand double-height signature and clock */}
           <Footer onNavigateSection={handleNavigateSection} />
+
+          {/* Floating Scroll-Down action button with up-down bobbing animation */}
+          <ScrollDownButton />
         </motion.div>
       )}
     </>

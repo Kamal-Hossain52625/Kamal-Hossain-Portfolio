@@ -5,8 +5,36 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldAlert, ShieldCheck, HeartHandshake, Code, LayoutDashboard, Cpu, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
+import {
+  ShieldAlert,
+  ShieldCheck,
+  HeartHandshake,
+  Code,
+  LayoutDashboard,
+  Cpu,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  Building2,
+  Code2,
+  Rocket,
+  Eye,
+  FileText,
+  HardDrive,
+  Clock,
+  Layers,
+  X,
+  Maximize2
+} from 'lucide-react';
 import { getStoredProfileImage, subscribeToProfileImage } from '../lib/storage';
+import {
+  getStoredAboutPhotos,
+  subscribeToAboutPhotos,
+  getStoredCvDocument,
+  subscribeToCvDocument
+} from '../lib/aboutStorage';
+import { AboutWorkPhoto, CvDocument } from '../types';
+import CvModal from './CvModal';
 
 interface ManifestoItem {
   id: string;
@@ -88,20 +116,53 @@ export default function About({
   // Profile image (controlled centrally via Admin Panel)
   const [profileImage, setProfileImage] = useState<string>(getStoredProfileImage);
 
+  // Real-world work photos state (Office, Coding, New Projects) - synced from storage/cloud
+  const [workPhotos, setWorkPhotos] = useState<AboutWorkPhoto[]>(getStoredAboutPhotos);
+  const [selectedLightboxPhoto, setSelectedLightboxPhoto] = useState<AboutWorkPhoto | null>(null);
+
+  // Curriculum Vitae (CV) state - synced from storage/cloud
+  const [cvDoc, setCvDoc] = useState<CvDocument>(getStoredCvDocument);
+  const [isCvModalOpen, setIsCvModalOpen] = useState(false);
+
   useEffect(() => {
     const unsubCloud = subscribeToProfileImage((cloudImg) => {
       setProfileImage(cloudImg);
+    });
+
+    const unsubPhotos = subscribeToAboutPhotos((photos) => {
+      setWorkPhotos(photos);
+    });
+
+    const unsubCv = subscribeToCvDocument((doc) => {
+      setCvDoc(doc);
     });
 
     const handlePhotoUpdate = (e: any) => {
       if (e.detail !== undefined) setProfileImage(e.detail);
       else setProfileImage(getStoredProfileImage());
     };
+
+    const handlePhotosUpdate = (e: any) => {
+      if (e.detail) setWorkPhotos(e.detail);
+      else setWorkPhotos(getStoredAboutPhotos());
+    };
+
+    const handleCvUpdate = (e: any) => {
+      if (e.detail) setCvDoc(e.detail);
+      else setCvDoc(getStoredCvDocument());
+    };
+
     window.addEventListener('portfolio_profile_image_updated', handlePhotoUpdate);
+    window.addEventListener('portfolio_about_photos_updated', handlePhotosUpdate);
+    window.addEventListener('portfolio_cv_updated', handleCvUpdate);
 
     return () => {
       unsubCloud();
+      unsubPhotos();
+      unsubCv();
       window.removeEventListener('portfolio_profile_image_updated', handlePhotoUpdate);
+      window.removeEventListener('portfolio_about_photos_updated', handlePhotosUpdate);
+      window.removeEventListener('portfolio_cv_updated', handleCvUpdate);
     };
   }, []);
 
@@ -223,12 +284,242 @@ export default function About({
 
         </div>
 
+        {/* ========================================================= */}
+        {/* 02 // WORK & CRAFTSMANSHIP: OFFICE, CODING & NEW PROJECTS */}
+        {/* ========================================================= */}
+        <div className="mb-24">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div>
+              <span className="font-mono text-[10px] tracking-[0.3em] text-orange-500 font-extrabold uppercase block mb-2">
+                02 // REAL-WORLD MOMENTS & WORK ETHIC
+              </span>
+              <h3 className="font-sans text-2xl md:text-4xl text-white font-bold tracking-tight uppercase italic">
+                Office, Deep Code & Project Innovation
+              </h3>
+              <p className="text-white/50 text-xs md:text-sm mt-2 max-w-2xl leading-relaxed">
+                Authentic glimpses into day-to-day office teamwork, late-night code craftsmanship, and architectural launches.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-white/40 font-mono text-xs self-start md:self-end">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>3 VERIFIED WORK EXPERIENCES</span>
+            </div>
+          </div>
+
+          {/* 3-Card Interactive Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {workPhotos.map((photo, idx) => {
+              const CategoryIcon =
+                photo.category === 'office'
+                  ? Building2
+                  : photo.category === 'coding'
+                  ? Code2
+                  : Rocket;
+
+              const categoryBadge =
+                photo.category === 'office'
+                  ? 'OFFICE WORK & COLLABORATION'
+                  : photo.category === 'coding'
+                  ? 'DEEP CODING CRAFTSMANSHIP'
+                  : 'NEW PROJECT INNOVATION';
+
+              return (
+                <div
+                  key={photo.id || idx}
+                  onClick={() => setSelectedLightboxPhoto(photo)}
+                  className="group relative border border-white/10 hover:border-orange-500/40 rounded-2xl bg-white/5 hover:bg-white/[0.08] backdrop-blur-xl p-5 transition-all duration-300 flex flex-col justify-between shadow-xl overflow-hidden cursor-pointer active:scale-[0.99]"
+                >
+                  {/* Picture Frame */}
+                  <div className="relative h-56 w-full rounded-xl overflow-hidden bg-black/60 mb-5 border border-white/10 select-none">
+                    <img
+                      src={photo.imageUrl}
+                      alt={photo.title}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0e0e14] via-transparent to-black/30 pointer-events-none" />
+
+                    {/* Top-Left Category Badge */}
+                    <div className="absolute top-3 left-3 px-2.5 py-1 rounded bg-black/80 backdrop-blur-md border border-white/15 text-[9px] font-mono font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5 z-10 shadow-lg">
+                      <CategoryIcon className="w-3.5 h-3.5 text-orange-400" />
+                      <span>{categoryBadge}</span>
+                    </div>
+
+                    {/* Top-Right View Indicator */}
+                    <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-black/80 text-white/80 group-hover:text-orange-400 group-hover:border-orange-500/40 font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 border border-white/15 transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 shadow-xl z-10">
+                      <Maximize2 className="w-3.5 h-3.5" />
+                      <span>View</span>
+                    </div>
+
+                    {/* Bottom Status Tag */}
+                    <div className="absolute bottom-3 left-3 bg-[#0c0c0f]/90 border border-white/10 px-2.5 py-0.5 rounded text-[8px] font-mono tracking-widest text-white/70 flex items-center gap-1.5 z-10">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      {photo.date || 'ACTIVE RECORD'}
+                    </div>
+                  </div>
+
+                  {/* Narrative & Details - Heading only */}
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[10px] font-mono text-orange-400/90 font-bold uppercase tracking-widest">
+                      {photo.subtitle}
+                    </span>
+                    <h4 className="font-sans text-lg font-bold text-white group-hover:text-orange-300 transition-colors">
+                      {photo.title}
+                    </h4>
+
+                    {/* Tag Pills */}
+                    <div className="flex flex-wrap gap-1.5 mt-1 pt-2.5 border-t border-white/5">
+                      {photo.tags?.map((tag, tIdx) => (
+                        <span
+                          key={tIdx}
+                          className="text-[9px] font-mono bg-white/5 border border-white/10 px-2 py-0.5 rounded text-white/50"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Location Footer */}
+                    {photo.location && (
+                      <div className="mt-1 text-[9px] font-mono text-white/40 flex items-center gap-1">
+                        <Building2 className="w-3 h-3 text-orange-400/70" />
+                        <span>{photo.location}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* 03 // CURRICULUM VITAE (CV)                                */}
+        {/* ========================================================= */}
+        <div className="mb-24">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+            <div>
+              <span className="font-mono text-[10px] tracking-[0.3em] text-orange-500 font-extrabold uppercase block mb-2">
+                03 // CURRICULUM VITAE
+              </span>
+              <h3 className="font-sans text-2xl md:text-4xl text-white font-bold tracking-tight uppercase italic">
+                Curriculum Vitae (CV)
+              </h3>
+            </div>
+          </div>
+
+          {/* Luxury Executive CV Display Card */}
+          <div className="relative border border-white/15 bg-white/5 backdrop-blur-2xl rounded-3xl p-6 md:p-10 shadow-2xl overflow-hidden">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+              {/* Left Column: Metadata & Tactile Action Buttons */}
+              <div className="lg:col-span-7 flex flex-col gap-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 shrink-0">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-mono text-orange-400 font-bold uppercase tracking-wider block">
+                      OFFICIAL DOSSIER
+                    </span>
+                    <h4 className="font-sans text-xl md:text-2xl font-bold text-white">
+                      Curriculum Vitae (CV)
+                    </h4>
+                  </div>
+                </div>
+
+                {/* Metadata Pills */}
+                <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+                  <span className="px-3 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5" /> VERIFIED CV
+                  </span>
+                  <span className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-white/70 flex items-center gap-1.5">
+                    <HardDrive className="w-3.5 h-3.5 text-orange-400" /> {cvDoc.fileSize}
+                  </span>
+                  <span className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-white/70 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-blue-400" /> {cvDoc.uploadedAt}
+                  </span>
+                  {cvDoc.isCustomUploaded && (
+                    <span className="px-3 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 font-semibold">
+                      Cloud Synchronized
+                    </span>
+                  )}
+                </div>
+
+                {/* Primary Action Button: View Fullscreen CV Only */}
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <button
+                    onClick={() => setIsCvModalOpen(true)}
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-black font-mono text-xs font-bold uppercase tracking-wider cursor-pointer active:scale-95 transition-all shadow-[0_4px_20px_rgba(249,115,22,0.25)]"
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>VIEW FULLSCREEN CV</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Column: Embedded Interactive PDF Document Preview Frame */}
+              <div className="lg:col-span-5 relative group">
+                <div className="relative border border-white/15 rounded-2xl bg-[#14141c] overflow-hidden shadow-2xl">
+                  {/* Browser/Document Chrome Bar */}
+                  <div className="h-9 bg-[#1a1a24] border-b border-white/10 px-4 flex items-center justify-between select-none">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+                    </div>
+                    <span className="text-[10px] font-mono text-white/50 tracking-wider truncate max-w-[200px]">
+                      {cvDoc.fileName}
+                    </span>
+                    <button
+                      onClick={() => setIsCvModalOpen(true)}
+                      className="text-white/60 hover:text-white"
+                      title="Expand to Fullscreen"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Document Viewport Frame */}
+                  <div className="relative h-64 md:h-72 w-full bg-white overflow-hidden">
+                    {cvDoc.pdfDataUrl ? (
+                      <iframe
+                        src={`${cvDoc.pdfDataUrl}#toolbar=0&navpanes=0&view=FitH`}
+                        title="CV Document Preview"
+                        className="w-full h-full border-none pointer-events-none select-none"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-zinc-400 p-4">
+                        <FileText className="w-10 h-10 mb-2 opacity-50" />
+                        <span className="text-xs font-mono">No PDF uploaded</span>
+                      </div>
+                    )}
+
+                    {/* Tactile Click Overlay to expand */}
+                    <div
+                      onClick={() => setIsCvModalOpen(true)}
+                      className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-colors cursor-pointer flex items-center justify-center group"
+                    >
+                      <span className="opacity-0 group-hover:opacity-100 px-4 py-2 rounded-xl bg-black/90 border border-orange-500/50 text-orange-400 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-2xl transition-all">
+                        <Eye className="w-4 h-4" /> Click To Expand Fullscreen
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Dynamic UI/UX Audit & Manifesto Panel (CRITICAL REQUIREMENT) */}
         <div id="manifesto-panel" className="border border-white/10 bg-white/5 backdrop-blur-2xl rounded-3xl p-6 md:p-10 relative shadow-2xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-8 mb-6 md:mb-8">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-orange-500 font-mono text-[9px] tracking-widest uppercase">INTERACTIVE AUDIT BOARD</span>
+                <span className="text-orange-500 font-mono text-[9px] tracking-widest uppercase">
+                  04 // INTERACTIVE AUDIT BOARD
+                </span>
                 {/* Mobile mode indicator chip */}
                 <span className="md:hidden text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border bg-white/5 text-orange-400 border-orange-500/30">
                   {isManifestoExpanded ? 'FULL VIEW' : 'COMPACT VIEW'}
@@ -466,6 +757,110 @@ export default function About({
         </div>
 
       </div>
+
+      {/* Modals for Photo Editing and Fullscreen CV Preview */}
+      <AnimatePresence>
+        {/* Read-Only Work Photo Lightbox Modal */}
+        {selectedLightboxPhoto && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-2xl"
+            onClick={() => setSelectedLightboxPhoto(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-4xl max-h-[90vh] bg-[#0d0d12] border border-white/15 rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+            >
+              {/* Lightbox Header */}
+              <div className="flex items-center justify-between p-4 md:px-6 md:py-4 border-b border-white/10 bg-[#14141a]/90 backdrop-blur-md shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="px-3 py-1 rounded bg-black/70 border border-white/15 text-[10px] font-mono font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
+                    {selectedLightboxPhoto.category === 'office' ? (
+                      <Building2 className="w-3.5 h-3.5" />
+                    ) : selectedLightboxPhoto.category === 'coding' ? (
+                      <Code2 className="w-3.5 h-3.5" />
+                    ) : (
+                      <Rocket className="w-3.5 h-3.5" />
+                    )}
+                    <span>{selectedLightboxPhoto.category.toUpperCase()} MOMENT</span>
+                  </div>
+                  {selectedLightboxPhoto.date && (
+                    <span className="text-[10px] font-mono text-white/50 hidden sm:inline">
+                      {selectedLightboxPhoto.date}
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => setSelectedLightboxPhoto(null)}
+                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10 transition-colors cursor-pointer"
+                  title="Close viewer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Lightbox Body with Scroll */}
+              <div className="overflow-y-auto p-4 md:p-6 flex flex-col gap-6">
+                {/* Full Aspect Image Frame */}
+                <div className="relative w-full max-h-[55vh] rounded-2xl overflow-hidden border border-white/10 bg-black/80 flex items-center justify-center">
+                  <img
+                    src={selectedLightboxPhoto.imageUrl}
+                    alt={selectedLightboxPhoto.title}
+                    className="w-full h-auto max-h-[55vh] object-contain"
+                  />
+                </div>
+
+                {/* Narrative Details - Heading only */}
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <span className="text-xs font-mono text-orange-400 font-bold uppercase tracking-widest block mb-1">
+                      {selectedLightboxPhoto.subtitle}
+                    </span>
+                    <h3 className="font-sans text-xl md:text-2xl font-bold text-white">
+                      {selectedLightboxPhoto.title}
+                    </h3>
+                  </div>
+
+                  {/* Metadata and Tags */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/10">
+                    <div className="flex flex-wrap gap-2">
+                      {selectedLightboxPhoto.tags?.map((tag, tIdx) => (
+                        <span
+                          key={tIdx}
+                          className="text-[10px] font-mono bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg text-white/60"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    {selectedLightboxPhoto.location && (
+                      <div className="text-[11px] font-mono text-white/50 flex items-center gap-1.5">
+                        <Building2 className="w-3.5 h-3.5 text-orange-400/80" />
+                        <span>{selectedLightboxPhoto.location}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Read-Only CV Viewer Modal (Upload and Download disabled on frontend) */}
+        {isCvModalOpen && (
+          <CvModal
+            isOpen={isCvModalOpen}
+            onClose={() => setIsCvModalOpen(false)}
+            cv={cvDoc}
+            allowUpload={false}
+            allowDownload={false}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 }

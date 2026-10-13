@@ -33,7 +33,8 @@ import {
   FolderGit2,
   Camera,
   Image as ImageIcon,
-  Smartphone
+  Smartphone,
+  FileText
 } from 'lucide-react';
 import { Project, Inquiry } from '../types';
 import {
@@ -59,6 +60,17 @@ import {
 import { formatExternalUrl, isValidExternalUrl } from '../lib/urlHelper';
 import ProjectFormModal from './ProjectFormModal';
 import CaseStudyModal from './CaseStudyModal';
+import AboutPhotoEditModal from './AboutPhotoEditModal';
+import CvModal from './CvModal';
+import {
+  getStoredAboutPhotos,
+  subscribeToAboutPhotos,
+  getStoredCvDocument,
+  subscribeToCvDocument,
+  saveStoredCvDocument,
+  triggerCvDownload
+} from '../lib/aboutStorage';
+import { AboutWorkPhoto, CvDocument } from '../types';
 
 interface AdminDashboardProps {
   onBackToPortfolio: () => void;
@@ -90,6 +102,16 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
   const [adminPhotoUrlInput, setAdminPhotoUrlInput] = useState('');
   const [profilePhotoStatus, setProfilePhotoStatus] = useState('');
 
+  // Real-world work photos state (Office, Coding, New Projects)
+  const [adminAboutPhotos, setAdminAboutPhotos] = useState<AboutWorkPhoto[]>(getStoredAboutPhotos);
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+
+  // CV Document state & uploader
+  const [adminCvDoc, setAdminCvDoc] = useState<CvDocument>(getStoredCvDocument);
+  const [isCvModalOpen, setIsCvModalOpen] = useState(false);
+  const [cvUploadStatus, setCvUploadStatus] = useState('');
+  const [isAdminUploadingCv, setIsAdminUploadingCv] = useState(false);
+
   // Sync listener & Cloud Realtime subscriptions
   useEffect(() => {
     // 1. Subscribe to cloud projects & inquiries
@@ -105,6 +127,14 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
       setAdminProfilePhoto(cloudProfileImg);
     });
 
+    const unsubPhotos = subscribeToAboutPhotos((photos) => {
+      setAdminAboutPhotos(photos);
+    });
+
+    const unsubCv = subscribeToCvDocument((doc) => {
+      setAdminCvDoc(doc);
+    });
+
     // 2. Broadcast listeners
     const handleProjectsUpdate = (e: any) => {
       if (e.detail) setProjects(e.detail);
@@ -118,20 +148,87 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
       if (e.detail !== undefined) setAdminProfilePhoto(e.detail);
       else setAdminProfilePhoto(getStoredProfileImage());
     };
+    const handleAboutPhotosUpdate = (e: any) => {
+      if (e.detail) setAdminAboutPhotos(e.detail);
+      else setAdminAboutPhotos(getStoredAboutPhotos());
+    };
+    const handleCvUpdate = (e: any) => {
+      if (e.detail) setAdminCvDoc(e.detail);
+      else setAdminCvDoc(getStoredCvDocument());
+    };
 
     window.addEventListener('portfolio_projects_updated', handleProjectsUpdate);
     window.addEventListener('portfolio_inquiries_updated', handleInquiriesUpdate);
     window.addEventListener('portfolio_profile_image_updated', handleProfileUpdate);
+    window.addEventListener('portfolio_about_photos_updated', handleAboutPhotosUpdate);
+    window.addEventListener('portfolio_cv_updated', handleCvUpdate);
 
     return () => {
       unsubProjects();
       unsubInquiries();
       unsubProfile();
+      unsubPhotos();
+      unsubCv();
       window.removeEventListener('portfolio_projects_updated', handleProjectsUpdate);
       window.removeEventListener('portfolio_inquiries_updated', handleInquiriesUpdate);
       window.removeEventListener('portfolio_profile_image_updated', handleProfileUpdate);
+      window.removeEventListener('portfolio_about_photos_updated', handleAboutPhotosUpdate);
+      window.removeEventListener('portfolio_cv_updated', handleCvUpdate);
     };
   }, []);
+
+  // Admin direct CV PDF upload handler
+  const handleAdminCvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setCvUploadStatus('Error: Please select a valid PDF file (.pdf).');
+      return;
+    }
+
+    if (file.size > 20 * 1024 * 1024) {
+      setCvUploadStatus('Error: PDF file size exceeds 20MB limit.');
+      return;
+    }
+
+    setIsAdminUploadingCv(true);
+    setCvUploadStatus('');
+
+    const formattedSize =
+      file.size > 1024 * 1024
+        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+        : `${Math.round(file.size / 1024)} KB`;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const dataUrl = event.target?.result as string;
+      const updatedCv: CvDocument = {
+        fileName: file.name,
+        fileSize: formattedSize,
+        uploadedAt: new Date().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }),
+        pdfDataUrl: dataUrl,
+        isCustomUploaded: true,
+      };
+
+      await saveStoredCvDocument(updatedCv);
+      setAdminCvDoc(updatedCv);
+      setIsAdminUploadingCv(false);
+      setCvUploadStatus('✓ Success: New CV PDF uploaded from local drive!');
+      setTimeout(() => setCvUploadStatus(''), 4500);
+    };
+
+    reader.onerror = () => {
+      setIsAdminUploadingCv(false);
+      setCvUploadStatus('Error: Failed to read local PDF file.');
+    };
+
+    reader.readAsDataURL(file);
+  };
 
   // Handlers for Project CRUD
   const handleOpenAdd = () => {
@@ -935,6 +1032,120 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
               </div>
             </div>
 
+            {/* Curriculum Vitae (CV) Document Manager */}
+            <div className="p-6 border border-white/10 bg-white/5 backdrop-blur-2xl rounded-3xl flex flex-col justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 border-b border-white/5 pb-3 mb-3">
+                  <FileText className="w-4 h-4 text-orange-400" />
+                  <h4 className="font-sans text-base font-bold text-white uppercase">
+                    Curriculum Vitae (CV / PDF)
+                  </h4>
+                </div>
+
+                <p className="text-xs text-white/60 font-light leading-relaxed mb-4">
+                  Upload, replace or download your official PDF resume directly from your local drive.
+                </p>
+
+                {/* CV File Preview Box */}
+                <div className="flex items-center gap-3 p-3.5 bg-black/40 border border-white/5 rounded-2xl mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 shrink-0">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-mono font-bold text-white truncate">
+                      {adminCvDoc.fileName}
+                    </span>
+                    <div className="flex items-center gap-2 text-[9px] font-mono text-white/40 mt-0.5">
+                      <span>{adminCvDoc.fileSize}</span>
+                      <span>•</span>
+                      <span>{adminCvDoc.uploadedAt}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {cvUploadStatus && (
+                  <div className={`p-2.5 rounded-xl border text-xs font-mono mb-3 ${
+                    cvUploadStatus.startsWith('Error')
+                      ? 'border-rose-500/30 bg-rose-500/10 text-rose-400'
+                      : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                  }`}>
+                    {cvUploadStatus}
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-2.5">
+                  <label className="flex items-center justify-center gap-2 py-2.5 px-4 bg-orange-500 hover:bg-orange-600 text-black rounded-xl text-xs font-mono font-bold uppercase transition-all cursor-pointer shadow-lg active:scale-98">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{isAdminUploadingCv ? 'UPLOADING...' : 'UPLOAD PDF FROM LOCAL DRIVE'}</span>
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handleAdminCvUpload}
+                      disabled={isAdminUploadingCv}
+                      className="hidden"
+                    />
+                  </label>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsCvModalOpen(true)}
+                      className="flex-1 py-2 px-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-mono text-[9px] font-bold uppercase rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-orange-400" /> PREVIEW PDF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => triggerCvDownload(adminCvDoc)}
+                      className="flex-1 py-2 px-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-mono text-[9px] font-bold uppercase rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Download className="w-3.5 h-3.5 text-white/70" /> DOWNLOAD
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Work Photos Manager (Office, Coding, New Projects) */}
+            <div className="p-6 border border-white/10 bg-white/5 backdrop-blur-2xl rounded-3xl flex flex-col justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 border-b border-white/5 pb-3 mb-3">
+                  <Camera className="w-4 h-4 text-orange-400" />
+                  <h4 className="font-sans text-base font-bold text-white uppercase">
+                    About Work Pictures
+                  </h4>
+                </div>
+
+                <p className="text-xs text-white/60 font-light leading-relaxed mb-4">
+                  Manage the 3 highlighted photographic moments: Office Work, Coding Crafts, and New Projects.
+                </p>
+
+                {/* 3 Thumbnails */}
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {adminAboutPhotos.map((photo) => (
+                    <div key={photo.id} className="relative h-16 rounded-xl overflow-hidden border border-white/10 bg-black/60 group">
+                      <img src={photo.imageUrl} alt={photo.title} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <span className="text-[8px] font-mono font-bold text-white uppercase tracking-wider text-center px-1">
+                          {photo.category}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsPhotoModalOpen(true)}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/40 text-orange-400 rounded-xl text-xs font-mono font-bold uppercase transition-all cursor-pointer shadow-md"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>CHANGE / EDIT ALL 3 PICTURES</span>
+                </button>
+              </div>
+            </div>
+
             {/* Data Export & Backup */}
             <div className="p-6 border border-white/10 bg-white/5 backdrop-blur-2xl rounded-3xl flex flex-col justify-between gap-4">
               <div className="flex items-center gap-2 border-b border-white/5 pb-3">
@@ -989,12 +1200,28 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
         )}
       </AnimatePresence>
 
-      {/* Case Study Live Preview Modal */}
+      {/* About Photo Edit Modal */}
       <AnimatePresence>
-        {previewProject && (
-          <CaseStudyModal
-            project={previewProject}
-            onClose={() => setPreviewProject(null)}
+        {isPhotoModalOpen && (
+          <AboutPhotoEditModal
+            isOpen={isPhotoModalOpen}
+            onClose={() => setIsPhotoModalOpen(false)}
+            allPhotos={adminAboutPhotos}
+            onPhotosUpdated={(updated) => setAdminAboutPhotos(updated)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* CV Fullscreen Modal */}
+      <AnimatePresence>
+        {isCvModalOpen && (
+          <CvModal
+            isOpen={isCvModalOpen}
+            onClose={() => setIsCvModalOpen(false)}
+            cv={adminCvDoc}
+            onCvUpdated={(updated) => setAdminCvDoc(updated)}
+            allowUpload={true}
+            allowDownload={true}
           />
         )}
       </AnimatePresence>

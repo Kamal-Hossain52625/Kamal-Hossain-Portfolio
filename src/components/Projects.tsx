@@ -9,7 +9,7 @@ import { Project } from '../types';
 import CaseStudyModal from './CaseStudyModal';
 import { getStoredProjects, subscribeToProjects } from '../lib/storage';
 import { formatExternalUrl, isValidExternalUrl } from '../lib/urlHelper';
-import { Github, ExternalLink, FileText, LayoutGrid, Layers, CircleDot, ArrowDown, Sparkles, Smartphone, Check } from 'lucide-react';
+import { Github, ExternalLink, FileText, LayoutGrid, Layers, CircleDot, ArrowDown, Sparkles, Smartphone, Check, Lock, ArrowUpRight, Globe } from 'lucide-react';
 
 // Live interactive mockup for dynamically added custom projects
 function CustomDynamicMockup() {
@@ -352,19 +352,57 @@ export default function Projects({
 
   const hasMoreProjectsOnMobile = isMobile && !isShowingAll && projects.length > filteredProjects.length;
 
-  const getMockupElement = (id: string, image?: string) => {
+  const getMockupElement = (id: string, image?: string, liveUrl?: string, title?: string) => {
     if (image && (image.startsWith('http') || image.startsWith('data:image') || image.startsWith('/'))) {
+      // Clean domain for browser address bar
+      let displayDomain = 'app.production.live';
+      if (liveUrl && isValidExternalUrl(liveUrl)) {
+        try {
+          const parsed = new URL(formatExternalUrl(liveUrl));
+          displayDomain = parsed.hostname.replace('www.', '');
+        } catch {
+          displayDomain = liveUrl.replace(/^https?:\/\//, '').split('/')[0];
+        }
+      }
+
       return (
-        <div className="absolute inset-0 w-full h-full bg-[#070709] overflow-hidden group/img">
-          <img
-            src={image}
-            alt="Project Cover"
-            className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover/img:scale-105"
-            onError={(e) => {
-              (e.target as HTMLElement).style.display = 'none';
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 w-full h-full bg-[#0a0b10] flex flex-col justify-start overflow-hidden select-none">
+          {/* Elegant macOS-style Browser Chrome Header */}
+          <div className="flex items-center justify-between px-3.5 py-2 bg-[#12141d]/95 border-b border-white/10 backdrop-blur-md shrink-0 z-10">
+            {/* Window control dots */}
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80 shadow-[0_0_6px_rgba(244,63,94,0.4)]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80 shadow-[0_0_6px_rgba(245,158,11,0.4)]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 shadow-[0_0_6px_rgba(16,185,129,0.4)]" />
+            </div>
+
+            {/* Clean Centered URL Address Pill */}
+            <div className="flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-black/60 border border-white/10 text-[9px] font-mono text-zinc-300 max-w-[210px] truncate shadow-inner">
+              <Lock className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
+              <span className="truncate tracking-wide font-medium">{displayDomain}</span>
+            </div>
+
+            {/* Live Indicator */}
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[7.5px] font-mono uppercase text-emerald-400 font-extrabold tracking-widest hidden sm:inline">LIVE</span>
+            </div>
+          </div>
+
+          {/* Browser Viewport with subtle glass vignette */}
+          <div className="relative flex-1 w-full overflow-hidden bg-black/40 group/img">
+            <img
+              src={image}
+              alt={title || "Project Preview"}
+              className="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover/img:scale-105"
+              loading="lazy"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none';
+              }}
+            />
+            {/* Subtle luxury dark vignette at the bottom */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent pointer-events-none" />
+          </div>
         </div>
       );
     }
@@ -469,123 +507,136 @@ export default function Projects({
         {/* Case Study Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
           <AnimatePresence mode="popLayout">
-            {filteredProjects.map((project, idx) => (
-              <motion.article
-                key={project.id}
-                layout
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.65, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                className="group relative flex flex-col justify-between border border-white/10 bg-white/5 backdrop-blur-2xl rounded-3xl overflow-hidden shadow-2xl"
-              >
-                
-                {/* Visual live simulator inside project card */}
-                <div 
-                  data-cursor="project"
-                  className="relative h-64 w-full border-b border-white/10 overflow-hidden"
+            {filteredProjects.map((project, idx) => {
+              const cleanTechStack = (project.techStack || [])
+                .flatMap((tech: string) => tech.split(/,\s*|\s+and\s+/i))
+                .map((tech: string) => tech.trim().replace(/^and\s+/i, '').replace(/\s+only$/i, ''))
+                .filter((tech: string) => tech.length > 0 && tech.toLowerCase() !== 'and' && tech !== '&');
+
+              return (
+                <motion.article
+                  key={project.id}
+                  layout
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.65, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                  className="group relative flex flex-col justify-between border border-white/10 bg-white/5 backdrop-blur-2xl rounded-3xl overflow-hidden shadow-2xl hover:border-orange-500/30 transition-all duration-300"
                 >
-                  {getMockupElement(project.id, project.image)}
                   
-                  {/* Subtle luxury gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80 pointer-events-none" />
-                </div>
-
-                {/* Text Content */}
-                <div className="p-6 md:p-8 flex-1 flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-center gap-4 mb-3.5">
-                      <span className="text-[10px] font-mono tracking-[0.2em] font-extrabold text-orange-500 uppercase">
-                        {project.category} // ARCHITECTURE
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className={`h-1.5 w-1.5 rounded-full ${project.id.startsWith('custom-') ? 'bg-orange-500 animate-pulse' : 'bg-emerald-500'}`} />
-                        <span className="text-[8px] font-mono text-white/40 font-bold uppercase">
-                          {project.id.startsWith('custom-') ? 'USER DYNAMIC' : 'PROD STABLE'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <h3 className="font-sans text-2xl text-white font-bold tracking-tight mb-2 group-hover:text-orange-400 transition-colors uppercase italic">
-                      {project.title}
-                    </h3>
-                    
-                    <p className="font-sans text-xs text-white/60 tracking-wide leading-relaxed mb-6 font-light">
-                      {project.description}
-                    </p>
-
-                    {/* Tech Badges */}
-                    <div className="flex flex-wrap gap-1.5 mb-8">
-                      {project.techStack.map((tech) => (
-                        <span 
-                          key={tech}
-                          className="px-2.5 py-1 rounded bg-white/5 border border-white/5 text-[8.5px] font-mono text-white/50 font-medium"
-                        >
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
+                  {/* Visual live simulator / Browser mockup */}
+                  <div 
+                    data-cursor="project"
+                    className="relative h-64 md:h-72 w-full border-b border-white/10 overflow-hidden bg-[#07080c]"
+                  >
+                    {getMockupElement(project.id, project.image, project.liveDemo, project.title)}
                   </div>
 
-                  {/* Operational Metrics Cards */}
-                  <div className="grid grid-cols-3 gap-2 p-3 bg-white/5 border border-white/10 rounded-xl mb-6">
-                    {project.metrics.map((metric, mIdx) => (
-                      <div key={mIdx} className="flex flex-col text-left">
-                        <span className="font-sans text-sm font-bold text-white tracking-tight">{metric.value}</span>
-                        <span className="text-[7.5px] font-mono text-white/40 font-bold tracking-wider uppercase mt-0.5">{metric.label}</span>
+                  {/* Text Content */}
+                  <div className="p-6 md:p-8 flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-center gap-4 mb-3">
+                        <span className="text-[10px] font-mono tracking-[0.2em] font-extrabold text-orange-400 uppercase">
+                          {project.category} // ARCHITECTURE
+                        </span>
+                        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10">
+                          <span className={`h-1.5 w-1.5 rounded-full ${project.id.startsWith('custom-') ? 'bg-orange-400 animate-pulse' : 'bg-emerald-400'}`} />
+                          <span className="text-[8px] font-mono text-zinc-300 font-bold uppercase tracking-wider">
+                            {project.id.startsWith('custom-') ? 'CUSTOM WORK' : 'PROD STABLE'}
+                          </span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
 
-                  {/* Interactive Trigger Actions */}
-                  <div className="flex items-center justify-between border-t border-white/5 pt-5 mt-auto">
-                    
-                    {/* Read case study modal trigger */}
-                    <button
-                      onClick={() => setSelectedCaseStudy(project)}
-                      className="flex items-center gap-1.5 font-mono text-[9px] font-extrabold tracking-widest text-orange-400 hover:text-white transition-colors cursor-pointer uppercase"
-                    >
-                      <FileText className="w-4 h-4 text-orange-500" />
-                      ANALYZE ARCHITECTURE
-                    </button>
-
-                    <div className="flex items-center gap-3">
-                      {isValidExternalUrl(project.github) && (
-                        <a
-                          href={formatExternalUrl(project.github)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 border border-white/10 rounded-full text-white/60 hover:text-white hover:border-white/20 transition-colors bg-white/5 hover:bg-white/10"
-                          aria-label="View Source on GitHub (Opens in new tab)"
-                          title="View Source on GitHub (Opens in new tab)"
-                        >
-                          <Github className="w-3.5 h-3.5" />
-                        </a>
+                      <h3 className="font-sans text-xl md:text-2xl text-white font-bold tracking-tight mb-1.5 group-hover:text-orange-400 transition-colors uppercase">
+                        {project.title}
+                      </h3>
+                      
+                      {project.subtitle && (
+                        <p className="text-[11px] font-mono text-white/50 tracking-wide font-medium mb-3 truncate">
+                          {project.subtitle}
+                        </p>
                       )}
-                      <a
-                        href={isValidExternalUrl(project.liveDemo) ? formatExternalUrl(project.liveDemo) : '#'}
-                        target={isValidExternalUrl(project.liveDemo) ? "_blank" : undefined}
-                        rel={isValidExternalUrl(project.liveDemo) ? "noopener noreferrer" : undefined}
-                        onClick={(e) => {
-                          if (!isValidExternalUrl(project.liveDemo)) {
-                            e.preventDefault();
-                            setSelectedCaseStudy(project);
-                          }
-                        }}
-                        className="p-2 border border-white/10 rounded-full text-white/60 hover:text-white hover:border-white/20 transition-colors bg-white/5 hover:bg-white/10 group/btn"
-                        aria-label="Launch Live Preview in New Tab"
-                        title={isValidExternalUrl(project.liveDemo) ? "Launch Live Preview (Opens in new tab)" : "View Architecture Details"}
+
+                      <p className="font-sans text-xs text-zinc-300/80 tracking-wide leading-relaxed mb-5 font-normal line-clamp-3">
+                        {project.description}
+                      </p>
+
+                      {/* Tech Badges: Clean, sanitized micro-pills */}
+                      <div className="flex flex-wrap gap-1.5 mb-6">
+                        {cleanTechStack.map((tech) => (
+                          <span 
+                            key={tech}
+                            className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-[9px] font-mono text-zinc-300 font-medium tracking-wide hover:border-orange-500/40 hover:text-orange-300 transition-colors"
+                          >
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Operational Metrics: Clean & minimal highlight bar */}
+                    {project.metrics && project.metrics.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2 px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/10 mb-6 text-left">
+                        {project.metrics.slice(0, 3).map((metric, mIdx) => (
+                          <div key={mIdx} className="flex flex-col min-w-0">
+                            <span className="font-sans text-xs md:text-sm font-bold text-white tracking-tight truncate">
+                              {metric.value}
+                            </span>
+                            <span className="text-[7.5px] font-mono text-zinc-400 font-semibold tracking-wider uppercase mt-0.5 truncate">
+                              {metric.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Interactive Trigger Actions */}
+                    <div className="flex items-center justify-between border-t border-white/5 pt-5 mt-auto">
+                      
+                      {/* Read case study modal trigger */}
+                      <button
+                        onClick={() => setSelectedCaseStudy(project)}
+                        className="flex items-center gap-1.5 font-mono text-[9px] font-extrabold tracking-widest text-orange-400 hover:text-white transition-colors cursor-pointer uppercase py-1"
                       >
-                        <ExternalLink className="w-3.5 h-3.5 group-hover/btn:text-orange-400 transition-colors" />
-                      </a>
+                        <FileText className="w-3.5 h-3.5 text-orange-500" />
+                        ANALYZE ARCHITECTURE
+                      </button>
+
+                      <div className="flex items-center gap-2.5">
+                        {isValidExternalUrl(project.github) && (
+                          <a
+                            href={formatExternalUrl(project.github)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 border border-white/10 rounded-full text-white/60 hover:text-white hover:border-orange-500/40 hover:bg-orange-500/10 transition-all bg-white/5"
+                            aria-label="View Source on GitHub (Opens in new tab)"
+                            title="View Source on GitHub"
+                          >
+                            <Github className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                        {isValidExternalUrl(project.liveDemo) && (
+                          <a
+                            href={formatExternalUrl(project.liveDemo)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-3.5 py-1.5 border border-orange-500/40 hover:border-orange-400 rounded-full text-orange-400 hover:text-white bg-orange-500/10 hover:bg-orange-500/20 text-[9px] font-mono font-bold tracking-wider uppercase transition-all shadow-[0_0_15px_rgba(249,115,22,0.15)] group/btn"
+                            aria-label="Launch Live Preview in New Tab"
+                            title="Visit Live Website"
+                          >
+                            <span>LIVE DEMO</span>
+                            <ArrowUpRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                          </a>
+                        )}
+                      </div>
+
                     </div>
 
                   </div>
 
-                </div>
-
-              </motion.article>
-            ))}
+                </motion.article>
+              );
+            })}
           </AnimatePresence>
         </div>
 

@@ -110,35 +110,35 @@ export const projectsData: Project[] = [
   },
   {
     id: 'apex',
-    title: 'Apex Canvas Engine',
-    subtitle: 'Advanced Vector Drawing & Layout Suite',
-    description: 'An interactive design workspace rendering layered vector graphics, custom grid snapping, and nested geometric grouping in the browser.',
-    longDescription: 'Apex Canvas is a professional creative tool designed entirely with core math and native rendering concepts. It supports shape rendering, complex transformations, nested layers, mouse coordinate projections, and export formats (SVG, PNG, JSON).',
-    image: 'interactive-canvas',
-    techStack: ['React', 'TypeScript', 'HTML5 Canvas', 'Math.js', 'Tailwind CSS'],
+    title: 'SM Beauty Shop',
+    subtitle: 'Modern Cosmetics E-Commerce Platform',
+    description: 'A full-stack e-commerce marketplace featuring fast product catalogs, real-time cart checkout, responsive design, and robust backend order management.',
+    longDescription: 'SM Beauty Shop is a complete cosmetics and personal care e-commerce system engineered for performance and effortless mobile shopping. It features instant multi-category browsing, real-time cart updates, and robust backend management.',
+    image: 'https://i.postimg.cc/GmZMz8Lg/sm-beauty-shop.png',
+    techStack: ['React', 'TypeScript', 'Laravel', 'Tailwind CSS', 'MySQL', 'REST API'],
     features: [
-      'Infinite zoom, pan, and responsive canvas coordinate mapping',
-      'Perfect geometric snapping, guidelines, and angle locks',
-      'Layer list with lock states, groupings, and opacity sliders',
-      'Export matrices to high-fidelity SVG paths or PNG frames'
+      'Multi-category product catalog with search & filter',
+      'Dynamic shopping cart & instant order placement',
+      'Mobile-optimized responsive design layout',
+      'Robust backend order & inventory tracking'
     ],
     metrics: [
-      { label: 'Zoom Range', value: '10% to 3200%' },
-      { label: 'Undo/Redo Stack', value: 'Infinite' },
-      { label: 'Rendering engine', value: 'Raw WebGL/2D' }
+      { label: 'Catalog Items', value: '500+ Listed' },
+      { label: 'Page Speed', value: '0.8s' },
+      { label: 'Architecture', value: 'Laravel + React' }
     ],
-    liveDemo: '#',
-    github: 'https://github.com/Kamal-Hossain52625/apex-canvas',
-    category: 'Creative',
-    showOnHome: false,
-    isFeatured: false,
+    liveDemo: 'https://smbeautyshop.com/',
+    github: 'https://github.com/Kamal-Hossain52625/ecommerce',
+    category: 'Full-stack',
+    showOnHome: true,
+    isFeatured: true,
     caseStudy: {
-      challenge: 'Handling dense vector calculations (thousands of curves and nodes) in JavaScript triggered severe canvas layout updates and lagging selection bounding boxes.',
-      solution: 'Implemented spatial partitioning (Quadtree) to optimize raycasting, query select shapes under the cursor instantaneously, and wrapped rendering loops in optimized RequestAnimationFrame pipelines.',
+      challenge: 'Handling diverse cosmetic SKU variations, inventory counts, and rapid promotional checkouts without slowing down mobile shopping experiences.',
+      solution: 'Architected a high-performance frontend powered by React and Tailwind, coupled with an optimized Laravel API backend and cached database schemas for lightning-fast cart operations.',
       results: [
-        'Renders up to 10,000 vector path elements concurrently at 60 FPS',
-        'Intuitive vector-drawing feel with zero input lag',
-        'Pristine, mathematical code layout and modular architecture'
+        'Sub-second product catalog loading across all devices',
+        'Reduced cart drop-off with streamlined checkout flow',
+        'Secure and scalable order management for beauty products'
       ]
     }
   }
