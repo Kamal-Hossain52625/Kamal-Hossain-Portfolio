@@ -26,15 +26,15 @@ import {
   X,
   Maximize2
 } from 'lucide-react';
+import { getStoredProfileImage, subscribeToProfileImage } from '../lib/storage';
 import {
-  getStoredProfileImage,
-  subscribeToProfileImage,
   getStoredAboutPhotos,
   subscribeToAboutPhotos,
   getStoredCvDocument,
   subscribeToCvDocument
-} from '../lib/storage';
-import { AboutWorkPhoto } from '../types';
+} from '../lib/aboutStorage';
+import { AboutWorkPhoto, CvDocument } from '../types';
+import CvModal from './CvModal';
 
 interface ManifestoItem {
   id: string;
@@ -121,7 +121,7 @@ export default function About({
   const [selectedLightboxPhoto, setSelectedLightboxPhoto] = useState<AboutWorkPhoto | null>(null);
 
   // Curriculum Vitae (CV) state - synced from storage/cloud
-  const [cvDoc, setCvDoc] = useState(getStoredCvDocument);
+  const [cvDoc, setCvDoc] = useState<CvDocument>(getStoredCvDocument);
   const [isCvModalOpen, setIsCvModalOpen] = useState(false);
 
   useEffect(() => {
@@ -196,7 +196,7 @@ export default function About({
             </h3>
             
             <p className="font-sans text-white/60 text-sm md:text-base leading-relaxed tracking-wide font-light">
-              Over the last 5 years, I have engineered full-stack architectures and crafted high-end creative interfaces for clients globally. My philosophy is simple: **every line of code should run at maximum performance, and every pixel should carry artistic intent.**
+              Over the last 2 years, I have engineered full-stack architectures and crafted high-end creative interfaces for clients globally. My philosophy is simple: **every line of code should run at maximum performance, and every pixel should carry artistic intent.**
             </p>
             
             <p className="font-sans text-white/60 text-sm md:text-base leading-relaxed tracking-wide font-light">
@@ -206,7 +206,7 @@ export default function About({
             <div className="grid grid-cols-2 gap-4 mt-4 font-mono">
               <div className="p-4 border border-white/10 rounded-xl bg-white/5 backdrop-blur-md">
                 <span className="text-white/40 text-[10px] uppercase tracking-wider block mb-1">CURRENT LOCATION</span>
-                <span className="text-white text-xs font-semibold">Berlin, Germany (Remote Enabled)</span>
+                <span className="text-white text-xs font-semibold">Mirpur, Dhaka (Remote Enabled)</span>
               </div>
               <div className="p-4 border border-white/10 rounded-xl bg-white/5 backdrop-blur-md">
                 <span className="text-white/40 text-[10px] uppercase tracking-wider block mb-1">INTERESTS</span>
@@ -850,46 +850,15 @@ export default function About({
           </div>
         )}
 
-        {/* Read-Only CV Viewer Modal */}
+        {/* Read-Only CV Viewer Modal (Upload and Download disabled on frontend) */}
         {isCvModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-xl"
-            onClick={() => setIsCvModalOpen(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              onClick={(event) => event.stopPropagation()}
-              className="flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/15 bg-[#14141c] shadow-2xl"
-            >
-              <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
-                <span className="truncate pr-4 font-mono text-sm text-white">{cvDoc.fileName}</span>
-                <button
-                  type="button"
-                  onClick={() => setIsCvModalOpen(false)}
-                  className="rounded-lg p-2 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-                  aria-label="Close CV viewer"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              {cvDoc.pdfDataUrl ? (
-                <iframe
-                  src={cvDoc.pdfDataUrl}
-                  title="Curriculum Vitae"
-                  className="min-h-0 flex-1 border-0 bg-white"
-                />
-              ) : (
-                <div className="flex flex-1 items-center justify-center font-mono text-sm text-white/50">
-                  No PDF uploaded
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
+          <CvModal
+            isOpen={isCvModalOpen}
+            onClose={() => setIsCvModalOpen(false)}
+            cv={cvDoc}
+            allowUpload={false}
+            allowDownload={false}
+          />
         )}
       </AnimatePresence>
     </section>

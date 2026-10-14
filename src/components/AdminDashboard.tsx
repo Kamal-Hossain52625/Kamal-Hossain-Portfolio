@@ -1207,7 +1207,7 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
             isOpen={isPhotoModalOpen}
             onClose={() => setIsPhotoModalOpen(false)}
             allPhotos={adminAboutPhotos}
-            onPhotosUpdated={(updated: AboutWorkPhoto[]) => setAdminAboutPhotos(updated)}
+            onPhotosUpdated={(updated) => setAdminAboutPhotos(updated)}
           />
         )}
       </AnimatePresence>
@@ -1219,7 +1219,7 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
             isOpen={isCvModalOpen}
             onClose={() => setIsCvModalOpen(false)}
             cv={adminCvDoc}
-            onCvUpdated={(updated: typeof adminCvDoc) => setAdminCvDoc(updated)}
+            onCvUpdated={(updated) => setAdminCvDoc(updated)}
             allowUpload={true}
             allowDownload={true}
           />

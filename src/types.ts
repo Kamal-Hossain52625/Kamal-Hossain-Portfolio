@@ -88,3 +88,23 @@ export interface AdminUser {
   role: string;
   lastLogin?: string;
 }
+
+export interface AboutWorkPhoto {
+  id: string;
+  category: 'office' | 'coding' | 'project' | 'custom';
+  title: string;
+  subtitle: string;
+  description: string;
+  imageUrl: string;
+  tags: string[];
+  date?: string;
+  location?: string;
+}
+
+export interface CvDocument {
+  fileName: string;
+  fileSize: string;
+  uploadedAt: string;
+  pdfDataUrl: string;
+  isCustomUploaded?: boolean;
+}
