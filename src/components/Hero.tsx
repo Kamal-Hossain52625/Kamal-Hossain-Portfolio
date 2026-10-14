@@ -21,30 +21,46 @@ const audienceData: AudienceFilter[] = [
   {
     id: 'all',
     label: 'GENERAL PROFILE',
-    badge: 'SENIOR ENGINEER & ARCHITECT',
-    tagline: 'Engineering high-throughput systems and high-fidelity creative web applications.',
-    bullets: ['TypeScript & Next.js Ecosystem expert', 'Complex client-side custom vectors & canvas engines', 'Secure middleware gateways & API designs']
+    badge: 'LARAVEL & REACT FULL-STACK SPECIALIST',
+    tagline: 'Architecting rock-solid Laravel backends and high-performance React frontend applications.',
+    bullets: [
+      'Laravel 11 Backend: RESTful APIs, Eloquent ORM, queued jobs & database optimization',
+      'React 19 Frontend: modern hooks, TypeScript, fluid animation & zero-delay UI',
+      'Full-Stack Synergy: Seamless API-first integration, Sanctum auth & production architecture'
+    ]
   },
   {
     id: 'recruiter',
     label: 'RECRUITER VIEW',
-    badge: 'ATS-COMPLIANT & TEAM LEAD READY',
-    tagline: 'Ready to integrate seamlessly into agile teams as a Senior/Lead Software Engineer.',
-    bullets: ['5+ years professional codebase experience', 'Full stack depth (Node.js, PostgreSQL, Cloud Deployments)', 'Mentored 10+ junior developers and coordinated deployments']
+    badge: 'EXPERIENCED LARAVEL & REACT DEVELOPER',
+    tagline: 'Battle-tested expertise in PHP/Laravel backend architecture and React modern ecosystems.',
+    bullets: [
+      'Deep mastery of MVC, service repositories, Eloquent indexing, and API lifecycles',
+      'Production React specialist (clean code, reusable component libraries, TypeScript)',
+      'Agile delivery: Git workflows, database migrations, CI/CD and team leadership'
+    ]
   },
   {
     id: 'founder',
     label: 'FOUNDER VIEW',
-    badge: 'STARTUP CO-PILOT & BUILDER',
-    tagline: 'Transforming napkin diagrams into production-grade, highly scalable SaaS portals.',
-    bullets: ['Optimized cloud deployment structures (AWS/Docker/Cloud Run)', 'Zero-latency telemetry dashboard implementations', 'Rapid prototyper with clean maintainable structure']
+    badge: 'END-TO-END PRODUCT BUILDER',
+    tagline: 'Transforming napkin diagrams into scalable Laravel + React production platforms.',
+    bullets: [
+      'Full-cycle engineering: schema design, API endpoints, payment integration & responsive UI',
+      'Rapid time-to-market with maintainable architecture (Docker, Redis, Cloud SQL)',
+      'Optimized for high-concurrency traffic and frictionless customer onboarding'
+    ]
   },
   {
     id: 'freelancer',
     label: 'CLIENT VIEW',
-    badge: 'FREELANCE CONSULTANT & AGENCY EXPERT',
-    tagline: 'Designing, developing, and launching premium bespoke sites that elevate your brand.',
-    bullets: ['Awwwards-worthy fluid layouts & micro-interactions', '100% SEO, accessibility, and speed scores', 'Fixed-scope contracts with absolute transparent delivery schedules']
+    badge: 'FULL-STACK CONSULTANT & DELIVERER',
+    tagline: 'Complete turnkey web solutions: bulletproof Laravel backends + bespoke React web apps.',
+    bullets: [
+      'Custom Laravel admin panels, business logic, secure auth & 3rd-party integrations',
+      'High-conversion, ultra-responsive React interfaces with luxury micro-interactions',
+      'Fixed-scope delivery with clear milestones, clean documentation, and ongoing support'
+    ]
   }
 ];
 
@@ -211,7 +227,7 @@ const outerOrbitTools: OrbitTool[] = [
   {
     id: 'react',
     name: 'React 19',
-    role: 'Frontend UI',
+    role: 'Frontend UI Expert',
     color: '#61DAFB',
     glowColor: 'rgba(97, 218, 251, 0.9)',
     icon: <ReactLogo className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />,
@@ -221,7 +237,7 @@ const outerOrbitTools: OrbitTool[] = [
   {
     id: 'laravel',
     name: 'Laravel 11',
-    role: 'Backend API',
+    role: 'Backend API Expert',
     color: '#FF2D20',
     glowColor: 'rgba(255, 45, 32, 0.9)',
     icon: <LaravelLogo className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />,
@@ -634,7 +650,7 @@ export default function Hero() {
         <div className="flex flex-col items-center text-center mt-6 w-full max-w-4xl">
 
             {/* Cinematic Big Name Title */}
-            <div className="relative mb-5">
+            <div className="relative mb-4">
               <motion.div
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -647,26 +663,83 @@ export default function Hero() {
                   </span>
                 </h1>
               </motion.div>
+
+              {/* High-Impact Core Specialization Badges */}
               <motion.div
-                initial={{ y: 30, opacity: 0 }}
+                initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                className="flex flex-wrap items-center justify-center gap-2.5 mt-4"
               >
-                <h2 className="text-sm sm:text-base md:text-lg font-mono text-orange-500 tracking-[0.35em] font-semibold uppercase mt-4">
-                  Senior Software Architect & Full-Stack Engineer
+                <div className="px-3.5 py-1.5 rounded-full bg-red-500/15 border border-red-500/40 text-red-400 font-mono text-[11px] sm:text-xs font-bold tracking-widest uppercase flex items-center gap-2 shadow-[0_0_20px_rgba(239,68,68,0.25)]">
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  BACKEND: LARAVEL EXPERT
+                </div>
+                <span className="text-white/30 font-mono hidden sm:inline">//</span>
+                <div className="px-3.5 py-1.5 rounded-full bg-sky-400/15 border border-sky-400/40 text-sky-300 font-mono text-[11px] sm:text-xs font-bold tracking-widest uppercase flex items-center gap-2 shadow-[0_0_20px_rgba(56,189,248,0.25)]">
+                  <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+                  FRONTEND: REACT EXPERT
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <h2 className="text-xs sm:text-sm md:text-base font-mono text-orange-400/90 tracking-[0.25em] font-semibold uppercase mt-3">
+                  Full-Stack Architect & API Engineer
                 </h2>
               </motion.div>
             </div>
 
-            {/* Introduction Description */}
+            {/* Introduction Description tailored to Laravel Backend & React Frontend */}
             <motion.p
               initial={{ y: 20, opacity: 0 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="max-w-2xl text-white/60 font-sans text-sm md:text-base leading-relaxed tracking-wide mb-8 font-light"
+              className="max-w-2xl text-white/70 font-sans text-sm md:text-base leading-relaxed tracking-wide mb-6 font-light"
             >
-              Redefining the digital landscape through award-winning design systems and high-performance engineering. Helping brands, founders, and teams scale with beautiful glass architectures and resilient cloud foundations.
+              Specializing in high-performance web engineering with enterprise-grade <strong className="text-red-400 font-semibold underline decoration-red-500/40 underline-offset-4">Laravel Backends</strong> (RESTful APIs, Eloquent ORM, Queues & MySQL/PostgreSQL) coupled with reactive, pixel-perfect <strong className="text-sky-300 font-semibold underline decoration-sky-400/40 underline-offset-4">React Frontends</strong> (React 19, TypeScript, Tailwind CSS & Motion). Delivering production-ready, ultra-fast applications from database schema to responsive UI.
             </motion.p>
+
+            {/* Dual-Pillar Quick Tech Matrix */}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.35 }}
+              className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8"
+            >
+              {/* Backend Pillar Pill */}
+              <div className="relative group p-3.5 rounded-2xl bg-gradient-to-br from-red-950/30 via-black/40 to-black/70 border border-red-500/30 backdrop-blur-xl flex items-center gap-3 text-left shadow-xl hover:border-red-500/60 transition-all">
+                <div className="w-11 h-11 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(239,68,68,0.25)]">
+                  <LaravelLogo className="w-6 h-6" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="font-mono text-[9px] font-extrabold text-red-400 tracking-wider uppercase">BACKEND MASTERY</span>
+                    <span className="text-[9px] font-mono text-emerald-400 font-bold">● 98%</span>
+                  </div>
+                  <h4 className="font-sans text-xs font-bold text-white truncate">Laravel 11 & PHP 8.3</h4>
+                  <p className="font-mono text-[10px] text-white/50 truncate">REST APIs • Eloquent • MySQL • Redis</p>
+                </div>
+              </div>
+
+              {/* Frontend Pillar Pill */}
+              <div className="relative group p-3.5 rounded-2xl bg-gradient-to-br from-sky-950/30 via-black/40 to-black/70 border border-sky-400/30 backdrop-blur-xl flex items-center gap-3 text-left shadow-xl hover:border-sky-400/60 transition-all">
+                <div className="w-11 h-11 rounded-xl bg-sky-500/10 border border-sky-400/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(56,189,248,0.25)]">
+                  <ReactLogo className="w-6 h-6" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="font-mono text-[9px] font-extrabold text-sky-400 tracking-wider uppercase">FRONTEND MASTERY</span>
+                    <span className="text-[9px] font-mono text-emerald-400 font-bold">● 98%</span>
+                  </div>
+                  <h4 className="font-sans text-xs font-bold text-white truncate">React 19 & TypeScript</h4>
+                  <p className="font-mono text-[10px] text-white/50 truncate">SPAs • Tailwind CSS • Motion • Vite</p>
+                </div>
+              </div>
+            </motion.div>
 
             {/* Dynamic Audience Intent Switcher */}
             <motion.div

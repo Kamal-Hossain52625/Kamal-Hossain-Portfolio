@@ -26,7 +26,11 @@ import {
   Clock,
   Layers,
   X,
-  Maximize2
+  Maximize2,
+  CheckCircle2,
+  Database,
+  Server,
+  Zap
 } from 'lucide-react';
 import { getStoredProfileImage, subscribeToProfileImage } from '../lib/storage';
 import {
@@ -37,6 +41,29 @@ import {
 } from '../lib/aboutStorage';
 import { AboutWorkPhoto, CvDocument } from '../types';
 import CvModal from './CvModal';
+
+// Authentic SVG Brand Logos for Section 01.5
+function LaravelBrandLogo({ className = 'w-7 h-7' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 128 128" className={className} fill="none">
+      <path
+        fill="#FF2D20"
+        d="M109.8 33.4L80.9 16.7c-1.8-1-4-1-5.8 0L24.6 46.1c-1.8 1-2.9 3-2.9 5v45.9c0 2 1.1 3.9 2.9 5l20.4 11.8c1.8 1 4 1 5.8 0l59-34.1c1.8-1 2.9-3 2.9-5V38.4c0-2-1.1-3.9-2.9-5zM47.9 105.7l-18.4-10.6V56.2l18.4 10.6v38.9zm3.5-44.9l-18.4-10.6 44.9-25.9 18.4 10.6-44.9 25.9zm53.4 19.3l-50 28.9V70.1l50-28.9v40.9z"
+      />
+    </svg>
+  );
+}
+
+function ReactBrandLogo({ className = 'w-7 h-7' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 115 102" className={className} fill="none">
+      <ellipse cx="57.5" cy="51" rx="52" ry="20" stroke="#61DAFB" strokeWidth="6" />
+      <ellipse cx="57.5" cy="51" rx="52" ry="20" stroke="#61DAFB" strokeWidth="6" transform="rotate(60 57.5 51)" />
+      <ellipse cx="57.5" cy="51" rx="52" ry="20" stroke="#61DAFB" strokeWidth="6" transform="rotate(120 57.5 51)" />
+      <circle cx="57.5" cy="51" r="10" fill="#61DAFB" />
+    </svg>
+  );
+}
 
 interface ManifestoItem {
   id: string;
@@ -191,11 +218,16 @@ export default function About({
         
         {/* Header Indicator */}
         <div className="flex flex-col items-start gap-2 mb-12">
-          <span className="font-mono text-[10px] tracking-[0.3em] text-orange-500 font-extrabold uppercase">
-            01 // DESIGN PHILOSOPHY
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[10px] tracking-[0.3em] text-orange-500 font-extrabold uppercase">
+              01 // ARCHITECTURAL PHILOSOPHY
+            </span>
+            <span className="text-[9px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400">
+              FULL-STACK SPECIALIST
+            </span>
+          </div>
           <h2 className="font-sans text-3xl md:text-5xl text-white font-bold tracking-tight uppercase italic">
-            Immersive Storytelling
+            Laravel Backend & React Frontend Synergy
           </h2>
         </div>
 
@@ -205,25 +237,33 @@ export default function About({
           {/* Left Block: Bio narrative */}
           <div className="lg:col-span-7 flex flex-col gap-6">
             <h3 className="font-sans text-xl md:text-2xl font-bold text-white tracking-wide leading-relaxed">
-              Hello, I am Kamal. I bridge the gap between complex architectural logic and breathtaking visual design.
+              Hello, I am Kamal. I bridge the gap between heavy enterprise backend architecture and responsive, intuitive user interfaces.
             </h3>
             
-            <p className="font-sans text-white/60 text-sm md:text-base leading-relaxed tracking-wide font-light">
-              Over the last 2 years, I have engineered full-stack architectures and crafted high-end creative interfaces for clients globally. My philosophy is simple: **every line of code should run at maximum performance, and every pixel should carry artistic intent.**
+            <p className="font-sans text-white/70 text-sm md:text-base leading-relaxed tracking-wide font-light">
+              My engineering core is anchored in two industry-defining technologies: <strong className="text-red-400 font-semibold">Laravel for enterprise backend infrastructure & API design</strong>, and <strong className="text-sky-300 font-semibold">React for modular, reactive, and pixel-perfect client experiences</strong>.
             </p>
             
-            <p className="font-sans text-white/60 text-sm md:text-base leading-relaxed tracking-wide font-light">
-              I avoid standard templates. Instead, I build modular, highly polished ecosystems using modern front-end layers (React, TypeScript, Tailwind, and Motion) coupled with resilient background backends (Node.js, Express, PostgreSQL, Redis, and Cloud setups).
+            <p className="font-sans text-white/70 text-sm md:text-base leading-relaxed tracking-wide font-light">
+              I avoid sluggish monolithic templates. Instead, I build decoupled systems: a rock-solid, secure Laravel backend (leveraging Eloquent ORM, optimized MySQL/PostgreSQL schemas, queues, and Redis caching) communicating seamlessly with an ultra-fast React & TypeScript frontend that renders instantaneously with fluid spring micro-interactions.
             </p>
 
-            <div className="grid grid-cols-2 gap-4 mt-4 font-mono">
-              <div className="p-4 border border-white/10 rounded-xl bg-white/5 backdrop-blur-md">
-                <span className="text-white/40 text-[10px] uppercase tracking-wider block mb-1">CURRENT LOCATION</span>
-                <span className="text-white text-xs font-semibold">Mirpur, Dhaka (Remote Enabled)</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2 font-mono">
+              <div className="p-4 border border-red-500/25 rounded-2xl bg-gradient-to-br from-red-950/20 via-white/5 to-black/40 backdrop-blur-md">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-red-400 text-[10px] font-extrabold uppercase tracking-wider">BACKEND EXPERTISE</span>
+                </div>
+                <span className="text-white text-xs font-bold block">Laravel 11 & PHP 8.3</span>
+                <span className="text-white/50 text-[10px] mt-0.5 block">RESTful APIs • Eloquent • MySQL • Redis</span>
               </div>
-              <div className="p-4 border border-white/10 rounded-xl bg-white/5 backdrop-blur-md">
-                <span className="text-white/40 text-[10px] uppercase tracking-wider block mb-1">INTERESTS</span>
-                <span className="text-white text-xs font-semibold">Generative Art, System Security, UI Motion</span>
+              <div className="p-4 border border-sky-400/25 rounded-2xl bg-gradient-to-br from-sky-950/20 via-white/5 to-black/40 backdrop-blur-md">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+                  <span className="text-sky-300 text-[10px] font-extrabold uppercase tracking-wider">FRONTEND EXPERTISE</span>
+                </div>
+                <span className="text-white text-xs font-bold block">React 19 & TypeScript</span>
+                <span className="text-white/50 text-[10px] mt-0.5 block">SPAs • Tailwind CSS • Motion • Vite</span>
               </div>
             </div>
           </div>
@@ -269,14 +309,18 @@ export default function About({
               </div>
 
               {/* Card Meta Details */}
-              <div className="flex flex-col gap-4 font-sans">
+              <div className="flex flex-col gap-3 font-sans">
                 <div className="flex justify-between items-center border-b border-white/5 pb-2.5">
                   <span className="text-xs text-white/40">Name</span>
                   <span className="text-xs font-semibold text-white">Kamal Hossain</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-white/5 pb-2.5">
-                  <span className="text-xs text-white/40">Role</span>
-                  <span className="text-xs font-semibold text-orange-400">Lead Full-Stack Architect</span>
+                  <span className="text-xs text-white/40">Primary Specialization</span>
+                  <span className="text-xs font-bold text-orange-400">Laravel & React Architect</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-white/5 pb-2.5">
+                  <span className="text-xs text-white/40">Core Stack</span>
+                  <span className="text-xs font-mono text-white/80">Laravel 11 • React 19 • MySQL</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-white/5 pb-2.5">
                   <span className="text-xs text-white/40">Available Email</span>
@@ -285,9 +329,9 @@ export default function About({
                   </a>
                 </div>
                 <div className="flex justify-between items-center pb-1">
-                  <span className="text-xs text-white/40">Security Clearance</span>
-                  <span className="text-xs font-mono text-emerald-400 flex items-center gap-1 bg-emerald-950/15 border border-emerald-500/10 px-2 py-0.5 rounded text-[10px]">
-                    ● VERIFIED ACTIVE
+                  <span className="text-xs text-white/40">Clearance & Status</span>
+                  <span className="text-xs font-mono text-emerald-400 flex items-center gap-1 bg-emerald-950/20 border border-emerald-500/20 px-2 py-0.5 rounded text-[10px]">
+                    ● VERIFIED ACTIVE ARCHITECT
                   </span>
                 </div>
               </div>
@@ -295,6 +339,231 @@ export default function About({
             </div>
           </div>
 
+        </div>
+
+        {/* ========================================================= */}
+        {/* 01.5 // CORE DUAL-PILLAR SPECIALIZATION: BACKEND & FRONTEND */}
+        {/* ========================================================= */}
+        <div className="mb-24">
+          <div className="flex flex-col items-start gap-2 mb-10">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[10px] tracking-[0.3em] text-orange-500 font-extrabold uppercase">
+                01.5 // CORE DUAL-PILLAR ARCHITECTURE
+              </span>
+              <span className="text-[9px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400">
+                PRODUCTION-TESTED
+              </span>
+            </div>
+            <h3 className="font-sans text-2xl md:text-4xl text-white font-bold tracking-tight uppercase italic">
+              Backend Laravel & Frontend React Mastery
+            </h3>
+            <p className="text-white/60 text-xs md:text-sm max-w-2xl leading-relaxed">
+              How I architect modern full-stack systems: pairing Laravel’s battle-tested server-side power with React’s ultra-fluid client reactivity.
+            </p>
+          </div>
+
+          {/* Dual Pillar Cards Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+            
+            {/* PILLAR 1: BACKEND (LARAVEL & PHP) */}
+            <div className="relative group border border-red-500/30 hover:border-red-500/60 rounded-3xl bg-gradient-to-br from-red-950/20 via-[#0e0e14]/90 to-black/95 backdrop-blur-2xl p-7 md:p-8 flex flex-col justify-between shadow-2xl transition-all duration-300">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-3xl pointer-events-none" />
+
+              <div>
+                {/* Header */}
+                <div className="flex items-center justify-between gap-4 mb-6 pb-6 border-b border-red-500/20">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+                      <LaravelBrandLogo className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-mono text-[10px] font-extrabold text-red-400 uppercase tracking-widest">
+                          BACKEND CORE
+                        </span>
+                        <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-bold border border-red-500/30">
+                          98% PROFICIENCY
+                        </span>
+                      </div>
+                      <h4 className="font-sans text-xl md:text-2xl font-bold text-white tracking-wide">
+                        Laravel 11 & PHP 8.3
+                      </h4>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-white/70 text-xs md:text-sm leading-relaxed mb-6 font-light">
+                  Formulating scalable, secure, and low-latency RESTful APIs, transactional relational databases, and asynchronous task workers.
+                </p>
+
+                {/* Key Capabilities List */}
+                <div className="flex flex-col gap-3.5 mb-6">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
+                    <div>
+                      <strong className="text-white text-xs md:text-sm block">RESTful API & Resource Engineering</strong>
+                      <span className="text-white/60 text-xs leading-relaxed">
+                        Clean API resource controllers, automated Form Request validation, rate limiting, and standardized JSON schemas.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
+                    <div>
+                      <strong className="text-white text-xs md:text-sm block">Eloquent ORM & Database Mastery</strong>
+                      <span className="text-white/60 text-xs leading-relaxed">
+                        Complex polymorphic relations, eager loading to prevent N+1 queries, schema migrations, and indexing on MySQL/PostgreSQL.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
+                    <div>
+                      <strong className="text-white text-xs md:text-sm block">Authentication & API Security</strong>
+                      <span className="text-white/60 text-xs leading-relaxed">
+                        Laravel Sanctum & JWT token management, Role-Based Access Control (RBAC), CSRF protection, and SQL sanitization.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
+                    <div>
+                      <strong className="text-white text-xs md:text-sm block">Queues, Caching & Cron Scheduling</strong>
+                      <span className="text-white/60 text-xs leading-relaxed">
+                        Redis cache layer, asynchronous queue jobs, automated scheduled CRON tasks, and external payment webhook listeners.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tech Stack Pills */}
+              <div className="pt-5 border-t border-red-500/15 flex flex-wrap gap-1.5">
+                {['Laravel 11', 'PHP 8.3', 'Eloquent ORM', 'RESTful APIs', 'MySQL', 'PostgreSQL', 'Redis', 'Sanctum / JWT', 'Queues & Jobs'].map((tech, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 font-semibold"
+                  >
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* PILLAR 2: FRONTEND (REACT & TYPESCRIPT) */}
+            <div className="relative group border border-sky-400/30 hover:border-sky-400/60 rounded-3xl bg-gradient-to-br from-sky-950/20 via-[#0e0e14]/90 to-black/95 backdrop-blur-2xl p-7 md:p-8 flex flex-col justify-between shadow-2xl transition-all duration-300">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
+
+              <div>
+                {/* Header */}
+                <div className="flex items-center justify-between gap-4 mb-6 pb-6 border-b border-sky-400/20">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-14 h-14 rounded-2xl bg-sky-500/10 border border-sky-400/30 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(56,189,248,0.2)]">
+                      <ReactBrandLogo className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-mono text-[10px] font-extrabold text-sky-400 uppercase tracking-widest">
+                          FRONTEND CORE
+                        </span>
+                        <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold border border-sky-400/30">
+                          98% PROFICIENCY
+                        </span>
+                      </div>
+                      <h4 className="font-sans text-xl md:text-2xl font-bold text-white tracking-wide">
+                        React 19 & TypeScript
+                      </h4>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-white/70 text-xs md:text-sm leading-relaxed mb-6 font-light">
+                  Crafting modern, ultra-responsive client web applications with zero cumulative layout shift and tactile micro-interactions.
+                </p>
+
+                {/* Key Capabilities List */}
+                <div className="flex flex-col gap-3.5 mb-6">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-sky-400 mt-0.5 shrink-0" />
+                    <div>
+                      <strong className="text-white text-xs md:text-sm block">Component-Driven Architecture</strong>
+                      <span className="text-white/60 text-xs leading-relaxed">
+                        Modular, reusable, and type-safe components built with React 19, strict TypeScript interfaces, and pristine structure.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-sky-400 mt-0.5 shrink-0" />
+                    <div>
+                      <strong className="text-white text-xs md:text-sm block">Reactive State & Seamless API Sync</strong>
+                      <span className="text-white/60 text-xs leading-relaxed">
+                        Custom hooks, client-side caching, optimistic UI updates, debounced search filtering, and resilient error boundaries.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-sky-400 mt-0.5 shrink-0" />
+                    <div>
+                      <strong className="text-white text-xs md:text-sm block">Responsive Tailwind Design Systems</strong>
+                      <span className="text-white/60 text-xs leading-relaxed">
+                        Pixel-perfect styling across all mobile, tablet, and desktop viewports with bespoke glassmorphic dark palettes.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-sky-400 mt-0.5 shrink-0" />
+                    <div>
+                      <strong className="text-white text-xs md:text-sm block">Tactile Motion & Spring Micro-Interactions</strong>
+                      <span className="text-white/60 text-xs leading-relaxed">
+                        Fluid 60 FPS transitions via Motion, smooth carousels, SVG chart visualizations, and interactive canvas graphics.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tech Stack Pills */}
+              <div className="pt-5 border-t border-sky-400/15 flex flex-wrap gap-1.5">
+                {['React 19', 'TypeScript', 'Tailwind CSS', 'Motion', 'Vite', 'Custom Hooks', 'Single Page Apps', 'Responsive UI'].map((tech, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-sky-500/10 border border-sky-400/20 text-sky-300 font-semibold"
+                  >
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Full-Stack Integration Connector Ribbon */}
+          <div className="mt-8 p-5 md:p-6 rounded-2xl bg-gradient-to-r from-red-950/20 via-white/5 to-sky-950/20 border border-white/10 backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 shrink-0">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono font-bold text-orange-400 uppercase tracking-widest block">
+                  THE FULL-STACK CONNECTION
+                </span>
+                <p className="font-sans text-xs md:text-sm text-white/80">
+                  Laravel provides the bulletproof database & API foundation; React delivers the instantaneous client application.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 font-mono text-[10px] text-white/60 shrink-0">
+              <span className="px-3 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300">Laravel REST API</span>
+              <span>↔</span>
+              <span className="px-3 py-1 rounded-lg bg-sky-500/10 border border-sky-400/20 text-sky-300">React Client SPA</span>
+            </div>
+          </div>
         </div>
 
         {/* ========================================================= */}

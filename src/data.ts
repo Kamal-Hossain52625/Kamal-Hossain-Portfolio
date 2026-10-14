@@ -192,28 +192,28 @@ export const experienceData: Experience[] = [
 export const skillCategoriesData: SkillCategory[] = [
   {
     id: 'frontend',
-    name: 'Frontend & Interactive UI',
-    description: 'Engineering highly fluid, pixel-perfect, accessible interface experiences with cutting-edge layouts.',
+    name: 'Frontend & Reactive UI (React)',
+    description: 'Engineering highly fluid, pixel-perfect, accessible interface experiences with React 19 and modern styling.',
     skills: [
-      { name: 'React (v18/19)', level: 98, icon: 'React' },
-      { name: 'TypeScript', level: 95, icon: 'TypeScript' },
-      { name: 'Tailwind CSS v4', level: 99, icon: 'Tailwind' },
-      { name: 'Framer Motion / Motion', level: 94, icon: 'Motion' },
-      { name: 'Next.js', level: 92, icon: 'Next' },
-      { name: 'D3.js / Recharts', level: 88, icon: 'Data' }
+      { name: 'React (v18/19)', level: 99, icon: 'React' },
+      { name: 'TypeScript', level: 96, icon: 'TypeScript' },
+      { name: 'Tailwind CSS v4', level: 98, icon: 'Tailwind' },
+      { name: 'Framer Motion / Motion', level: 95, icon: 'Motion' },
+      { name: 'Vite & Single Page Apps', level: 94, icon: 'Next' },
+      { name: 'Custom Hooks & State Architecture', level: 95, icon: 'Data' }
     ]
   },
   {
     id: 'backend',
-    name: 'Backend & Systems',
-    description: 'Formulating high-throughput APIs, distributed systems, secure databases, and transactional layers.',
+    name: 'Backend & Systems (Laravel & PHP)',
+    description: 'Formulating high-throughput RESTful APIs, distributed databases, background queues, and secure transactional layers.',
     skills: [
-      { name: 'Node.js', level: 93, icon: 'Node' },
-      { name: 'Express / Fastify', level: 95, icon: 'Server' },
-      { name: 'PostgreSQL / SQL', level: 89, icon: 'Database' },
-      { name: 'Redis Caching', level: 85, icon: 'Redis' },
-      { name: 'REST & GraphQL APIs', level: 92, icon: 'API' },
-      { name: 'Firebase / Firestore', level: 90, icon: 'Firebase' }
+      { name: 'Laravel (v10/11)', level: 99, icon: 'Server' },
+      { name: 'PHP 8.3 & OOP Architecture', level: 97, icon: 'Code' },
+      { name: 'RESTful API Engineering', level: 98, icon: 'API' },
+      { name: 'Eloquent ORM & MySQL / PostgreSQL', level: 96, icon: 'Database' },
+      { name: 'Redis Caching & Queue Workers', level: 93, icon: 'Redis' },
+      { name: 'Laravel Sanctum & API Security', level: 95, icon: 'Shield' }
     ]
   },
   {
