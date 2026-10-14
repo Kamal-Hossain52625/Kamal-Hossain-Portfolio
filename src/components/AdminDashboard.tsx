@@ -1118,16 +1118,16 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
                 </div>
 
                 <p className="text-xs text-white/60 font-light leading-relaxed mb-4">
-                  Manage the 3 highlighted photographic moments: Office Work, Coding Crafts, and New Projects.
+                  Manage your photographic moments: Office Work, Coding Crafts, New Projects, and Add New Pictures.
                 </p>
 
-                {/* 3 Thumbnails */}
-                <div className="grid grid-cols-3 gap-2 mb-4">
+                {/* Thumbnails */}
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
                   {adminAboutPhotos.map((photo) => (
                     <div key={photo.id} className="relative h-16 rounded-xl overflow-hidden border border-white/10 bg-black/60 group">
                       <img src={photo.imageUrl} alt={photo.title} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <span className="text-[8px] font-mono font-bold text-white uppercase tracking-wider text-center px-1">
+                        <span className="text-[8px] font-mono font-bold text-white uppercase tracking-wider text-center px-1 truncate max-w-full">
                           {photo.category}
                         </span>
                       </div>
@@ -1141,7 +1141,7 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
                   className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/40 text-orange-400 rounded-xl text-xs font-mono font-bold uppercase transition-all cursor-pointer shadow-md"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
-                  <span>CHANGE / EDIT ALL 3 PICTURES</span>
+                  <span>MANAGE & ADD NEW PICTURES ({adminAboutPhotos.length})</span>
                 </button>
               </div>
             </div>

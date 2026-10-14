@@ -15,10 +15,17 @@ import {
   Rocket,
   Sparkles,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { AboutWorkPhoto } from '../types';
-import { updateAboutPhoto, resetAboutPhotos, defaultAboutPhotos } from '../lib/aboutStorage';
+import {
+  updateAboutPhoto,
+  deleteAboutPhoto,
+  resetAboutPhotos,
+  defaultAboutPhotos
+} from '../lib/aboutStorage';
 
 interface AboutPhotoEditModalProps {
   isOpen: boolean;
@@ -35,17 +42,21 @@ export default function AboutPhotoEditModal({
   allPhotos,
   onPhotosUpdated,
 }: AboutPhotoEditModalProps) {
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string>(
     photoToEdit?.id || allPhotos[0]?.id || 'work-office'
   );
 
-  const activePhoto = allPhotos.find((p) => p.id === selectedPhotoId) || allPhotos[0] || defaultAboutPhotos[0];
+  const activePhoto =
+    allPhotos.find((p) => p.id === selectedPhotoId) || allPhotos[0] || defaultAboutPhotos[0];
 
   const [title, setTitle] = useState(activePhoto?.title || '');
   const [subtitle, setSubtitle] = useState(activePhoto?.subtitle || '');
   const [description, setDescription] = useState(activePhoto?.description || '');
   const [imageUrl, setImageUrl] = useState(activePhoto?.imageUrl || '');
-  const [category, setCategory] = useState<'office' | 'coding' | 'project' | 'custom'>(activePhoto?.category || 'office');
+  const [category, setCategory] = useState<'office' | 'coding' | 'project' | 'custom'>(
+    activePhoto?.category || 'office'
+  );
   const [tagsInput, setTagsInput] = useState(activePhoto?.tags?.join(', ') || '');
   const [location, setLocation] = useState(activePhoto?.location || '');
   const [date, setDate] = useState(activePhoto?.date || '');
@@ -54,14 +65,16 @@ export default function AboutPhotoEditModal({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Sync state when activePhoto or photoToEdit changes
   useEffect(() => {
     if (photoToEdit?.id) {
+      setIsCreatingNew(false);
       setSelectedPhotoId(photoToEdit.id);
     }
   }, [photoToEdit]);
 
   useEffect(() => {
-    if (activePhoto) {
+    if (!isCreatingNew && activePhoto) {
       setTitle(activePhoto.title);
       setSubtitle(activePhoto.subtitle);
       setDescription(activePhoto.description);
@@ -73,14 +86,37 @@ export default function AboutPhotoEditModal({
       setErrorMsg('');
       setSaveSuccess(false);
     }
-  }, [selectedPhotoId, allPhotos]);
+  }, [selectedPhotoId, isCreatingNew, allPhotos]);
 
+  // Start adding a brand new photo
+  const handleStartNewPhoto = () => {
+    setIsCreatingNew(true);
+    setTitle('');
+    setSubtitle('');
+    setDescription('');
+    setImageUrl('');
+    setCategory('custom');
+    setTagsInput('Engineering, Milestone');
+    setLocation('Tech Workspace');
+    setDate('New Project');
+    setErrorMsg('');
+    setSaveSuccess(false);
+  };
+
+  // Switch to an existing photo tab
+  const handleSelectExistingPhoto = (id: string) => {
+    setIsCreatingNew(false);
+    setSelectedPhotoId(id);
+    setErrorMsg('');
+  };
+
+  // Handle local image file upload & client-side compression
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      setErrorMsg('Please select an image file (JPG, PNG, WebP).');
+      setErrorMsg('Please select a valid image file (JPG, PNG, WebP).');
       return;
     }
 
@@ -139,11 +175,11 @@ export default function AboutPhotoEditModal({
 
   const handleSave = () => {
     if (!title.trim()) {
-      setErrorMsg('Please enter a title for this photo moment.');
+      setErrorMsg('Please enter a title for this picture.');
       return;
     }
     if (!imageUrl.trim()) {
-      setErrorMsg('Please upload a photo or provide an image URL.');
+      setErrorMsg('Please upload a photo from local drive or provide an image URL.');
       return;
     }
 
@@ -152,275 +188,446 @@ export default function AboutPhotoEditModal({
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
 
-    const updatedPhoto: AboutWorkPhoto = {
-      id: activePhoto?.id || `work-${Date.now()}`,
-      category,
-      title: title.trim(),
-      subtitle: subtitle.trim(),
-      description: description.trim(),
-      imageUrl: imageUrl.trim(),
-      tags,
-      location: location.trim(),
-      date: date.trim(),
-    };
+    if (isCreatingNew) {
+      // Add Brand New Picture
+      const newPhoto: AboutWorkPhoto = {
+        id: `work-custom-${Date.now()}`,
+        category,
+        title: title.trim(),
+        subtitle: subtitle.trim() || 'Engineering Innovation',
+        description: description.trim() || 'Verified professional work experience.',
+        imageUrl: imageUrl.trim(),
+        tags: tags.length > 0 ? tags : ['Verified Experience'],
+        location: location.trim() || 'Dhaka, Bangladesh',
+        date: date.trim() || 'Active Operations',
+      };
 
-    const nextList = updateAboutPhoto(updatedPhoto);
-    onPhotosUpdated(nextList);
+      const nextList = updateAboutPhoto(newPhoto);
+      onPhotosUpdated(nextList);
+      setIsCreatingNew(false);
+      setSelectedPhotoId(newPhoto.id);
+    } else {
+      // Update Existing Picture
+      const updatedPhoto: AboutWorkPhoto = {
+        id: selectedPhotoId,
+        category,
+        title: title.trim(),
+        subtitle: subtitle.trim(),
+        description: description.trim(),
+        imageUrl: imageUrl.trim(),
+        tags: tags.length > 0 ? tags : ['Verified Experience'],
+        location: location.trim(),
+        date: date.trim(),
+      };
+
+      const nextList = updateAboutPhoto(updatedPhoto);
+      onPhotosUpdated(nextList);
+    }
 
     setSaveSuccess(true);
     setTimeout(() => {
       setSaveSuccess(false);
       onClose();
-    }, 1200);
+    }, 1100);
+  };
+
+  // Delete current photo
+  const handleDeleteCurrent = () => {
+    if (allPhotos.length <= 1) {
+      alert('You must keep at least 1 work picture in the portfolio.');
+      return;
+    }
+
+    if (window.confirm(`Are you sure you want to remove "${title || 'this picture'}"?`)) {
+      const nextList = deleteAboutPhoto(selectedPhotoId);
+      onPhotosUpdated(nextList);
+      if (nextList.length > 0) {
+        setSelectedPhotoId(nextList[0].id);
+      }
+    }
   };
 
   const handleResetDefaults = () => {
-    if (window.confirm('Reset all 3 work photos back to initial defaults?')) {
+    if (window.confirm('Reset all work pictures to default initial templates?')) {
       const reset = resetAboutPhotos();
       onPhotosUpdated(reset);
-      onClose();
+      setIsCreatingNew(false);
+      setSelectedPhotoId(reset[0]?.id || 'work-office');
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-xl">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 overflow-y-auto">
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 bg-black/85 backdrop-blur-md"
+      />
+
+      {/* Modal Dialog */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        className="relative w-full max-w-4xl max-h-[92vh] bg-[#0d0d12] border border-white/15 rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+        className="relative w-full max-w-4xl bg-[#0d0d12] border border-white/15 rounded-3xl p-6 md:p-8 shadow-2xl z-10 my-8 overflow-hidden"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 md:px-8 border-b border-white/10 bg-[#121218]/90 backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center text-orange-400">
-              <Sparkles className="w-5 h-5" />
+        {/* Glow ambient background */}
+        <div className="absolute top-0 right-0 w-80 h-80 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Modal Header */}
+        <div className="flex items-start justify-between pb-6 border-b border-white/10 relative z-10">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-mono text-[9px] uppercase tracking-widest text-orange-400 font-bold flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" /> LIVE ASSET EDITOR
+              </span>
+              <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white/50">
+                ANYTIME EDITABLE
+              </span>
             </div>
-            <div>
-              <h3 className="font-sans text-lg font-bold text-white">
-                Edit Work Experience Pictures
-              </h3>
-              <p className="text-xs text-white/50 font-mono">
-                Update Office, Deep Coding, or New Project photos
-              </p>
-            </div>
+            <h3 className="font-sans text-2xl md:text-3xl font-bold text-white uppercase italic tracking-tight">
+              Change & Edit About Pictures
+            </h3>
+            <p className="text-white/50 text-xs mt-1">
+              Upload your actual photos from office, deep coding sprints, or new project work from your local disk or web.
+            </p>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10 transition-colors cursor-pointer"
+            className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Tab Selection */}
-        <div className="flex border-b border-white/10 bg-white/5 px-6 pt-3 gap-2 overflow-x-auto">
-          {allPhotos.map((p) => {
-            const isSel = p.id === selectedPhotoId;
+        {/* Top Tabs Bar: Existing Photos + Add New Picture Button */}
+        <div className="flex flex-wrap items-center gap-2 pt-6 pb-4 border-b border-white/5 relative z-10">
+          {allPhotos.map((photo, pIdx) => {
+            const isSelected = !isCreatingNew && selectedPhotoId === photo.id;
             const Icon =
-              p.category === 'office'
+              photo.category === 'office'
                 ? Building2
-                : p.category === 'coding'
+                : photo.category === 'coding'
                 ? Code2
-                : Rocket;
+                : photo.category === 'project'
+                ? Rocket
+                : Sparkles;
+
+            const tabLabel =
+              photo.category === 'office'
+                ? `${pIdx + 1}. Office Work`
+                : photo.category === 'coding'
+                ? `${pIdx + 1}. Coding Sprints`
+                : photo.category === 'project'
+                ? `${pIdx + 1}. New Projects`
+                : `${pIdx + 1}. ${photo.title.slice(0, 14) || 'Custom Photo'}`;
+
             return (
               <button
-                key={p.id}
-                onClick={() => setSelectedPhotoId(p.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                  isSel
-                    ? 'bg-[#0d0d12] text-orange-400 border-t border-x border-white/15'
-                    : 'text-white/50 hover:text-white/80'
+                key={photo.id}
+                onClick={() => handleSelectExistingPhoto(photo.id)}
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer border ${
+                  isSelected
+                    ? 'bg-orange-500/20 text-orange-400 border-orange-500/40 shadow-[0_0_15px_rgba(249,115,22,0.15)]'
+                    : 'bg-white/5 text-white/60 border-white/10 hover:border-white/20 hover:text-white'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
-                <span>{p.category}</span>
+                <span>{tabLabel}</span>
+                {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse ml-1" />}
               </button>
             );
           })}
+
+          {/* + ADD NEW PICTURE BUTTON */}
+          <button
+            type="button"
+            onClick={handleStartNewPhoto}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer border ${
+              isCreatingNew
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.25)]'
+                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20 hover:text-emerald-300'
+            }`}
+          >
+            <Plus className="w-4 h-4 text-emerald-400" />
+            <span>+ ADD NEW PICTURE</span>
+          </button>
         </div>
 
-        {/* Body Content */}
-        <div className="overflow-y-auto p-6 md:p-8 flex flex-col gap-6">
-          <AnimatePresence>
-            {errorMsg && (
-              <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-mono flex items-center gap-2"
-              >
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{errorMsg}</span>
-              </motion.div>
+        {/* Content Body: Left Form Inputs + Right Live Preview */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 py-6 relative z-10 max-h-[60vh] overflow-y-auto pr-1">
+          {/* Form Controls */}
+          <div className="lg:col-span-7 flex flex-col gap-4 font-sans">
+            {/* New Picture Banner */}
+            {isCreatingNew && (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono flex items-center justify-between">
+                <span className="flex items-center gap-2 font-bold">
+                  <Plus className="w-4 h-4 text-emerald-400" />
+                  ADDING NEW WORK PICTURE
+                </span>
+                <span className="text-[10px] text-emerald-400/80">UPLOAD & SAVE TO PORTFOLIO</span>
+              </div>
             )}
 
-            {saveSuccess && (
-              <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-mono flex items-center gap-2"
-              >
-                <Check className="w-4 h-4 shrink-0 text-emerald-400" />
-                <span>Changes saved successfully & synced with cloud!</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            {/* Category / Work Type Selector */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-mono text-white/70 uppercase tracking-wider">
+                CATEGORY / WORK TYPE
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { key: 'office', label: 'Office Work', icon: Building2 },
+                  { key: 'coding', label: 'Coding Craft', icon: Code2 },
+                  { key: 'project', label: 'New Project', icon: Rocket },
+                  { key: 'custom', label: 'Custom Work', icon: Sparkles },
+                ].map((cat) => {
+                  const CatIcon = cat.icon;
+                  const isCatSelected = category === cat.key;
+                  return (
+                    <button
+                      key={cat.key}
+                      type="button"
+                      onClick={() => setCategory(cat.key as any)}
+                      className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-mono transition-all border cursor-pointer ${
+                        isCatSelected
+                          ? 'bg-orange-500/20 border-orange-500/50 text-orange-400 font-bold'
+                          : 'bg-white/5 border-white/10 text-white/60 hover:text-white'
+                      }`}
+                    >
+                      <CatIcon className="w-3.5 h-3.5" />
+                      <span>{cat.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Image Preview & Upload Left Box */}
-            <div className="lg:col-span-5 flex flex-col gap-3">
-              <label className="text-xs font-mono text-white/60 font-bold uppercase">
-                PHOTO PREVIEW & REPLACEMENT
+            {/* Image Source & Upload */}
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-3">
+              <label className="text-xs font-mono font-bold uppercase tracking-wider text-white/80 flex items-center justify-between">
+                <span>PICTURE FILE / IMAGE SOURCE *</span>
+                <span className="text-[10px] text-orange-400 font-normal">Local File Upload or URL</span>
               </label>
 
-              <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-white/15 bg-black/60 shadow-xl group">
-                {imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt="Work moment preview"
-                    className="w-full h-full object-cover"
+              {/* Local File Input */}
+              <div className="flex items-center gap-3">
+                <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs font-mono font-bold tracking-wider cursor-pointer active:scale-98 transition-all">
+                  <Upload className="w-4 h-4" />
+                  <span>{isProcessingFile ? 'OPTIMIZING IMAGE...' : 'CHOOSE FROM LOCAL DRIVE'}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    disabled={isProcessingFile}
                   />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-white/40">
-                    <ImageIcon className="w-10 h-10 mb-2 opacity-40" />
-                    <span className="text-xs font-mono">No Image</span>
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-                <span className="absolute bottom-2 left-2 text-[9px] font-mono text-white/70 bg-black/80 px-2 py-0.5 rounded border border-white/10">
-                  {category.toUpperCase()}
-                </span>
+                </label>
               </div>
 
-              {/* Upload Local Image Button */}
-              <label className="flex items-center justify-center gap-2 px-4 py-3 bg-orange-500 hover:bg-orange-600 text-black rounded-xl text-xs font-mono font-bold uppercase tracking-wider cursor-pointer active:scale-95 transition-all shadow-md mt-1">
-                <Upload className="w-4 h-4" />
-                <span>{isProcessingFile ? 'PROCESSING...' : 'UPLOAD FROM COMPUTER'}</span>
+              {/* Or paste URL */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono text-white/40 uppercase">OR URL:</span>
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  disabled={isProcessingFile}
-                  className="hidden"
-                />
-              </label>
-
-              {/* Or Direct Image URL input */}
-              <div className="flex flex-col gap-1 mt-1">
-                <span className="text-[10px] font-mono text-white/40 uppercase">OR IMAGE URL</span>
-                <input
-                  type="url"
+                  type="text"
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-mono text-white placeholder-white/30 focus:outline-none focus:border-orange-500/50"
+                  placeholder="https://... or paste image link"
+                  className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/30 focus:border-orange-500/50 outline-none font-mono"
                 />
               </div>
             </div>
 
-            {/* Form Fields Right Box */}
-            <div className="lg:col-span-7 flex flex-col gap-4">
-              <div>
-                <label className="text-xs font-mono text-white/60 font-bold uppercase block mb-1">
-                  MOMENT TITLE *
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm font-sans text-white focus:outline-none focus:border-orange-500/50"
-                />
-              </div>
+            {/* Title */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-mono text-white/70 uppercase tracking-wider">
+                TITLE (WHAT YOU WERE DOING) *
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Strategic Office Workspace & Sprint Reviews"
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:border-orange-500/50 outline-none"
+              />
+            </div>
 
-              <div>
-                <label className="text-xs font-mono text-white/60 font-bold uppercase block mb-1">
-                  SUBTITLE / SLOGAN
-                </label>
-                <input
-                  type="text"
-                  value={subtitle}
-                  onChange={(e) => setSubtitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-sans text-white focus:outline-none focus:border-orange-500/50"
-                />
-              </div>
+            {/* Subtitle */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-mono text-white/70 uppercase tracking-wider">
+                SUBTITLE / HIGHLIGHT ROLE
+              </label>
+              <input
+                type="text"
+                value={subtitle}
+                onChange={(e) => setSubtitle(e.target.value)}
+                placeholder="e.g. Leadership, Team Sync & Architectural Alignment"
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:border-orange-500/50 outline-none"
+              />
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-mono text-white/60 font-bold uppercase block mb-1">
-                    LOCATION
-                  </label>
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="e.g. Mirpur, Dhaka"
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-sans text-white focus:outline-none focus:border-orange-500/50"
-                  />
-                </div>
+            {/* Story & Description */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-mono text-white/70 uppercase tracking-wider">
+                STORY & EXPERIENCE DETAILS
+              </label>
+              <textarea
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe what you worked on, technologies used, leadership moments, or engineering challenges..."
+                className="bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-white/30 focus:border-orange-500/50 outline-none resize-none leading-relaxed"
+              />
+            </div>
 
-                <div>
-                  <label className="text-xs font-mono text-white/60 font-bold uppercase block mb-1">
-                    STATUS / DATE
-                  </label>
-                  <input
-                    type="text"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    placeholder="e.g. Active Operations"
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-sans text-white focus:outline-none focus:border-orange-500/50"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-mono text-white/60 font-bold uppercase block mb-1">
-                  SKILL TAGS (COMMA-SEPARATED)
+            {/* Tags & Metadata */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-mono text-white/70 uppercase tracking-wider">
+                  TAGS (COMMA SEPARATED)
                 </label>
                 <input
                   type="text"
                   value={tagsInput}
                   onChange={(e) => setTagsInput(e.target.value)}
-                  placeholder="TypeScript, React, Office Sync"
-                  className="w-full px-3.5 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-mono text-white focus:outline-none focus:border-orange-500/50"
+                  placeholder="e.g. Leadership, Sprints, Agile"
+                  className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:border-orange-500/50 outline-none font-mono"
                 />
               </div>
 
-              <div>
-                <label className="text-xs font-mono text-white/60 font-bold uppercase block mb-1">
-                  STORY / DESCRIPTION
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-mono text-white/70 uppercase tracking-wider">
+                  LOCATION / ENVIRONMENT
                 </label>
-                <textarea
-                  rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-sans text-white focus:outline-none focus:border-orange-500/50 resize-none"
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g. Corporate HQ, Dhaka"
+                  className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:border-orange-500/50 outline-none font-mono"
                 />
               </div>
             </div>
+
+            {errorMsg && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column: Live Portfolio Preview Card */}
+          <div className="lg:col-span-5 flex flex-col gap-3">
+            <label className="text-xs font-mono text-white/60 font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-orange-400" />
+              <span>LIVE PORTFOLIO PREVIEW</span>
+            </label>
+
+            <div className="border border-white/15 rounded-2xl bg-white/[0.04] p-4 flex flex-col gap-4 shadow-xl">
+              {/* Picture Frame */}
+              <div className="relative h-48 w-full rounded-xl overflow-hidden bg-black/60 border border-white/10">
+                {imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt={title || 'Preview'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-white/30 gap-2">
+                    <ImageIcon className="w-8 h-8 opacity-40" />
+                    <span className="text-[11px] font-mono">No Image Uploaded</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+
+                {/* Badge */}
+                <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded bg-black/80 backdrop-blur-md border border-white/15 text-[8.5px] font-mono font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1 shadow-md">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+                  <span>
+                    {category === 'office'
+                      ? 'OFFICE WORK'
+                      : category === 'coding'
+                      ? 'DEEP CODING CRAFTSMANSHIP'
+                      : category === 'project'
+                      ? 'NEW PROJECT INNOVATION'
+                      : 'CUSTOM EXPERIENCE'}
+                  </span>
+                </div>
+
+                <div className="absolute bottom-2.5 left-2.5 bg-black/90 border border-white/10 px-2 py-0.5 rounded text-[8px] font-mono text-white/70">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1" />
+                  {date || 'Active Operations'}
+                </div>
+              </div>
+
+              {/* Title & Narrative */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9.5px] font-mono text-orange-400/90 font-bold uppercase tracking-wider truncate">
+                  {subtitle || 'HIGHLIGHT ROLE / SUBTITLE'}
+                </span>
+                <h4 className="font-sans text-base font-bold text-white truncate">
+                  {title || 'Your Picture Title Here'}
+                </h4>
+                {description && (
+                  <p className="font-sans text-xs text-white/50 leading-relaxed font-light line-clamp-3">
+                    {description}
+                  </p>
+                )}
+
+                {/* Tags */}
+                <div className="flex flex-wrap gap-1 mt-1 pt-2 border-t border-white/5">
+                  {tagsInput
+                    .split(',')
+                    .filter((t) => t.trim())
+                    .slice(0, 3)
+                    .map((t, idx) => (
+                      <span
+                        key={idx}
+                        className="text-[8.5px] font-mono bg-white/5 border border-white/10 px-2 py-0.5 rounded text-white/50"
+                      >
+                        {t.trim()}
+                      </span>
+                    ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Delete Picture Button for existing extra photos */}
+            {!isCreatingNew && allPhotos.length > 1 && (
+              <button
+                type="button"
+                onClick={handleDeleteCurrent}
+                className="mt-2 py-2 px-3 rounded-xl border border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/15 text-rose-400 text-xs font-mono flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete this picture from portfolio</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Footer Buttons */}
-        <div className="flex items-center justify-between p-5 md:px-8 border-t border-white/10 bg-[#121218]/90">
+        {/* Modal Footer Controls */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-white/10 relative z-10">
           <button
             type="button"
             onClick={handleResetDefaults}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-xs font-mono transition-all cursor-pointer"
+            className="text-xs font-mono text-white/40 hover:text-white/80 flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            <span>Reset Defaults</span>
+            <span>Reset To Default Pictures</span>
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-mono font-bold uppercase transition-all cursor-pointer"
+              className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl border border-white/10 text-white/70 hover:text-white hover:bg-white/5 text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer"
             >
               Cancel
             </button>
@@ -428,10 +635,31 @@ export default function AboutPhotoEditModal({
             <button
               type="button"
               onClick={handleSave}
-              className="px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-black text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer shadow-lg active:scale-95 flex items-center gap-1.5"
+              disabled={isProcessingFile}
+              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg active:scale-95 ${
+                saveSuccess
+                  ? 'bg-emerald-600 text-white border border-emerald-500 shadow-emerald-600/30'
+                  : isCreatingNew
+                  ? 'bg-emerald-500 hover:bg-emerald-600 text-black border border-emerald-400 shadow-emerald-500/20'
+                  : 'bg-orange-500 hover:bg-orange-600 text-black border border-orange-400 shadow-orange-500/20'
+              }`}
             >
-              <Check className="w-4 h-4" />
-              <span>Save & Cloud Sync</span>
+              {saveSuccess ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>SAVED TO PORTFOLIO!</span>
+                </>
+              ) : isCreatingNew ? (
+                <>
+                  <Plus className="w-4 h-4" />
+                  <span>ADD TO PORTFOLIO</span>
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>SAVE PHOTO CHANGES</span>
+                </>
+              )}
             </button>
           </div>
         </div>

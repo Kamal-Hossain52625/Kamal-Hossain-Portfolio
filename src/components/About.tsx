@@ -14,6 +14,8 @@ import {
   Cpu,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Sparkles,
   Building2,
   Code2,
@@ -123,6 +125,17 @@ export default function About({
   // Curriculum Vitae (CV) state - synced from storage/cloud
   const [cvDoc, setCvDoc] = useState<CvDocument>(getStoredCvDocument);
   const [isCvModalOpen, setIsCvModalOpen] = useState(false);
+
+  // Mobile carousel slide state for Work Photos
+  const [mobileSlideIndex, setMobileSlideIndex] = useState(0);
+
+  const handlePrevSlide = () => {
+    setMobileSlideIndex((prev) => (prev > 0 ? prev - 1 : workPhotos.length - 1));
+  };
+
+  const handleNextSlide = () => {
+    setMobileSlideIndex((prev) => (prev < workPhotos.length - 1 ? prev + 1 : 0));
+  };
 
   useEffect(() => {
     const unsubCloud = subscribeToProfileImage((cloudImg) => {
@@ -303,12 +316,12 @@ export default function About({
 
             <div className="flex items-center gap-2 text-white/40 font-mono text-xs self-start md:self-end">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>3 VERIFIED WORK EXPERIENCES</span>
+              <span>{workPhotos.length} VERIFIED WORK EXPERIENCES</span>
             </div>
           </div>
 
-          {/* 3-Card Interactive Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* 1. Desktop View: 3-Card Grid (Hidden on Mobile) */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {workPhotos.map((photo, idx) => {
               const CategoryIcon =
                 photo.category === 'office'
@@ -390,6 +403,162 @@ export default function About({
                 </div>
               );
             })}
+          </div>
+
+          {/* 2. Mobile View: Interactive Carousel / Slide System (Visible only on Mobile) */}
+          <div className="block md:hidden">
+            {workPhotos.length > 0 && (() => {
+              const currentMobilePhoto = workPhotos[mobileSlideIndex] || workPhotos[0];
+              const MobileCatIcon =
+                currentMobilePhoto.category === 'office'
+                  ? Building2
+                  : currentMobilePhoto.category === 'coding'
+                  ? Code2
+                  : Rocket;
+
+              const mobileBadge =
+                currentMobilePhoto.category === 'office'
+                  ? 'OFFICE WORK & COLLABORATION'
+                  : currentMobilePhoto.category === 'coding'
+                  ? 'DEEP CODING CRAFTSMANSHIP'
+                  : 'NEW PROJECT INNOVATION';
+
+              return (
+                <div className="flex flex-col gap-4">
+                  {/* Top Mobile Slide Navigator Toolbar */}
+                  <div className="flex items-center justify-between px-2 bg-white/5 border border-white/10 rounded-2xl p-2.5 backdrop-blur-md">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+                      <span className="font-mono text-[10px] font-bold text-orange-400 uppercase tracking-widest">
+                        MOMENT {mobileSlideIndex + 1} / {workPhotos.length}
+                      </span>
+                    </div>
+
+                    {/* Previous / Next Arrow Buttons */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handlePrevSlide}
+                        className="w-8 h-8 rounded-xl bg-white/10 hover:bg-orange-500/20 border border-white/15 text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer"
+                        aria-label="Previous slide"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={handleNextSlide}
+                        className="w-8 h-8 rounded-xl bg-white/10 hover:bg-orange-500/20 border border-white/15 text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer"
+                        aria-label="Next slide"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Swipeable Slide Card */}
+                  <div className="overflow-hidden relative touch-pan-y">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={currentMobilePhoto.id || mobileSlideIndex}
+                        initial={{ opacity: 0, x: 40 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -40 }}
+                        transition={{ duration: 0.28, ease: 'easeOut' }}
+                        drag="x"
+                        dragConstraints={{ left: 0, right: 0 }}
+                        dragElastic={0.2}
+                        onDragEnd={(_, { offset, velocity }) => {
+                          if (offset.x < -40 || velocity.x < -250) {
+                            handleNextSlide();
+                          } else if (offset.x > 40 || velocity.x > 250) {
+                            handlePrevSlide();
+                          }
+                        }}
+                        onClick={() => setSelectedLightboxPhoto(currentMobilePhoto)}
+                        className="group relative border border-white/15 hover:border-orange-500/40 rounded-2xl bg-white/5 backdrop-blur-xl p-5 shadow-2xl flex flex-col justify-between overflow-hidden cursor-grab active:cursor-grabbing"
+                      >
+                        {/* Picture Frame */}
+                        <div className="relative h-56 w-full rounded-xl overflow-hidden bg-black/60 mb-5 border border-white/10 select-none">
+                          <img
+                            src={currentMobilePhoto.imageUrl}
+                            alt={currentMobilePhoto.title}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#0e0e14] via-transparent to-black/30 pointer-events-none" />
+
+                          {/* Top-Left Category Badge */}
+                          <div className="absolute top-3 left-3 px-2.5 py-1 rounded bg-black/80 backdrop-blur-md border border-white/15 text-[9px] font-mono font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5 z-10 shadow-lg">
+                            <MobileCatIcon className="w-3.5 h-3.5 text-orange-400" />
+                            <span>{mobileBadge}</span>
+                          </div>
+
+                          {/* Top-Right View Indicator */}
+                          <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-black/80 text-orange-400 border border-orange-500/40 font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 backdrop-blur-md shadow-xl z-10">
+                            <Maximize2 className="w-3.5 h-3.5" />
+                            <span>Tap to View</span>
+                          </div>
+
+                          {/* Bottom Status Tag */}
+                          <div className="absolute bottom-3 left-3 bg-[#0c0c0f]/90 border border-white/10 px-2.5 py-0.5 rounded text-[8px] font-mono tracking-widest text-white/70 flex items-center gap-1.5 z-10">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                            {currentMobilePhoto.date || 'ACTIVE RECORD'}
+                          </div>
+                        </div>
+
+                        {/* Narrative & Details */}
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[10px] font-mono text-orange-400 font-bold uppercase tracking-widest">
+                            {currentMobilePhoto.subtitle}
+                          </span>
+                          <h4 className="font-sans text-lg font-bold text-white">
+                            {currentMobilePhoto.title}
+                          </h4>
+
+                          {/* Tag Pills */}
+                          <div className="flex flex-wrap gap-1.5 mt-1 pt-2.5 border-t border-white/5">
+                            {currentMobilePhoto.tags?.map((tag, tIdx) => (
+                              <span
+                                key={tIdx}
+                                className="text-[9px] font-mono bg-white/5 border border-white/10 px-2 py-0.5 rounded text-white/50"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+
+                          {/* Location Footer */}
+                          {currentMobilePhoto.location && (
+                            <div className="mt-1 text-[9px] font-mono text-white/40 flex items-center gap-1">
+                              <Building2 className="w-3 h-3 text-orange-400/70" />
+                              <span>{currentMobilePhoto.location}</span>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Bottom Navigation Dots & Swipe Hint */}
+                  <div className="flex flex-col items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2">
+                      {workPhotos.map((_, dotIdx) => (
+                        <button
+                          key={dotIdx}
+                          onClick={() => setMobileSlideIndex(dotIdx)}
+                          className={`h-2 rounded-full transition-all cursor-pointer ${
+                            dotIdx === mobileSlideIndex
+                              ? 'w-7 bg-orange-500 shadow-[0_0_12px_rgba(249,115,22,0.6)]'
+                              : 'w-2 bg-white/20 hover:bg-white/40'
+                          }`}
+                          aria-label={`Go to slide ${dotIdx + 1}`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-[10px] font-mono text-white/40 tracking-wider">
+                      ← Swipe left/right or tap arrows to slide →
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
 

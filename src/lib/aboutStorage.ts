@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 import { AboutWorkPhoto, CvDocument } from '../types';
 
@@ -52,7 +52,7 @@ export const defaultAboutPhotos: AboutWorkPhoto[] = [
   }
 ];
 
-// Minimal valid PDF Data URI for default CV preview
+// Generate a valid minimal PDF Data URI for default CV preview
 function generateDefaultCvPdfDataUri(): string {
   const content = `BT
 /F1 20 Tf
@@ -62,22 +62,32 @@ function generateDefaultCvPdfDataUri(): string {
 0 -26 Td
 (Email: kamalhossainm5443@gmail.com  |  Portfolio: Verified Production Standard) Tj
 0 -20 Td
-(Location: Mirpur, Dhaka / Remote Available  |  Clearance: Verified Active) Tj
+(Location: Berlin, Germany / Remote Available  |  Clearance: Verified Active) Tj
 0 -30 Td
 (PROFESSIONAL PROFILE & SUMMARY) Tj
 /F1 10 Tf
 0 -18 Td
-(Lead Full-Stack Engineer designing enterprise architectures and high-end) Tj
+(Lead Full-Stack Engineer with 5+ years designing enterprise architectures and high-end) Tj
 0 -15 Td
 (reactive user experiences. Specialized in React, TypeScript, Node.js, and Cloud Infrastructure.) Tj
 0 -28 Td
 (CORE TECHNICAL CAPABILITIES) Tj
 0 -18 Td
-(- Frontend: React, Next.js, TypeScript, Tailwind CSS, Motion, WebGL) Tj
+(- Frontend: React, Next.js, TypeScript, Tailwind CSS, Canvas, Motion, WebGL) Tj
 0 -15 Td
-(- Backend: Node.js, Express, PostgreSQL, Redis, REST APIs, Laravel) Tj
+(- Backend: Node.js, Express, PostgreSQL, Redis, REST APIs, Microservices, Laravel) Tj
 0 -15 Td
-(- DevOps: Docker, Firebase, Git CI/CD, Vite, Linux Shell Systems) Tj
+(- DevOps & Tooling: Docker, Firebase, Git CI/CD, Vite, Linux Shell Systems) Tj
+0 -28 Td
+(KEY RESPONSIBILITIES & WORK VALUES) Tj
+0 -18 Td
+(- Office Collaboration: Active sprint leader translating business goals into tech specs) Tj
+0 -15 Td
+(- Code Craftsmanship: Zero-slop discipline, sub-millisecond renders, strict type safety) Tj
+0 -15 Td
+(- New Project Launches: Rapid prototyping, whiteboard architecture, and robust testing) Tj
+0 -36 Td
+([OFFICIAL RESUME VERIFICATION] Upload your personal custom PDF anytime via the local drive uploader) Tj
 ET`;
 
   const streamLength = content.length;
@@ -241,6 +251,7 @@ export function subscribeToAboutPhotos(onUpdate: (photos: AboutWorkPhoto[]) => v
             return;
           }
         }
+        // If not in cloud yet, seed defaults
         const current = getStoredAboutPhotos();
         setDoc(docRef, {
           photos: current,
@@ -261,6 +272,7 @@ export function subscribeToAboutPhotos(onUpdate: (photos: AboutWorkPhoto[]) => v
   }
 }
 
+// Update single photo
 export function updateAboutPhoto(updated: AboutWorkPhoto): AboutWorkPhoto[] {
   const current = getStoredAboutPhotos();
   const exists = current.some((p) => p.id === updated.id);
@@ -271,6 +283,15 @@ export function updateAboutPhoto(updated: AboutWorkPhoto): AboutWorkPhoto[] {
   return nextList;
 }
 
+// Delete single photo
+export function deleteAboutPhoto(id: string): AboutWorkPhoto[] {
+  const current = getStoredAboutPhotos();
+  const nextList = current.filter((p) => p.id !== id);
+  saveStoredAboutPhotos(nextList.length > 0 ? nextList : defaultAboutPhotos);
+  return nextList.length > 0 ? nextList : defaultAboutPhotos;
+}
+
+// Reset photos to default
 export function resetAboutPhotos(): AboutWorkPhoto[] {
   saveStoredAboutPhotos(defaultAboutPhotos);
   return defaultAboutPhotos;
@@ -296,12 +317,16 @@ export function getStoredCvDocument(): CvDocument {
 }
 
 export async function saveStoredCvDocument(cv: CvDocument): Promise<void> {
+  // 1. Save in IndexedDB (handles any file size up to 50MB+)
   await setIndexedDbValue('user_cv_pdf', cv);
 
+  // 2. Save in localStorage (safely trim or store full)
   try {
+    // If PDF is smaller than 2MB, store in localStorage
     if (cv.pdfDataUrl.length < 2.5 * 1024 * 1024) {
       localStorage.setItem(CV_STORAGE_KEY, JSON.stringify(cv));
     } else {
+      // Store metadata only in localStorage, keep large data in IndexedDB
       const metaOnly = { ...cv, pdfDataUrl: cv.pdfDataUrl.slice(0, 100) };
       localStorage.setItem(CV_STORAGE_KEY, JSON.stringify(metaOnly));
     }
@@ -311,6 +336,7 @@ export async function saveStoredCvDocument(cv: CvDocument): Promise<void> {
 
   window.dispatchEvent(new CustomEvent('portfolio_cv_updated', { detail: cv }));
 
+  // 3. Sync to Firestore if size is within Firestore 1MB limit (< 800KB)
   try {
     const docRef = doc(db, SETTINGS_COLLECTION, CV_DOC);
     if (cv.pdfDataUrl.length < 900 * 1024) {
@@ -323,6 +349,7 @@ export async function saveStoredCvDocument(cv: CvDocument): Promise<void> {
         updatedAt: new Date().toISOString()
       }, { merge: true });
     } else {
+      // Store metadata only in Firestore for large files
       await setDoc(docRef, {
         fileName: cv.fileName,
         fileSize: cv.fileSize,
@@ -337,6 +364,7 @@ export async function saveStoredCvDocument(cv: CvDocument): Promise<void> {
   }
 }
 
+// Initial loader that checks IndexedDB for full PDF
 export async function loadFullCvDocument(): Promise<CvDocument> {
   const idbCv = await getIndexedDbValue<CvDocument>('user_cv_pdf');
   if (idbCv && idbCv.pdfDataUrl && idbCv.pdfDataUrl.startsWith('data:application/pdf')) {
@@ -346,6 +374,7 @@ export async function loadFullCvDocument(): Promise<CvDocument> {
 }
 
 export function subscribeToCvDocument(onUpdate: (cv: CvDocument) => void): () => void {
+  // First load from IndexedDB/Local
   loadFullCvDocument().then((cv) => onUpdate(cv));
 
   try {
@@ -383,6 +412,7 @@ export function subscribeToCvDocument(onUpdate: (cv: CvDocument) => void): () =>
   }
 }
 
+// Trigger browser download for CV PDF
 export function triggerCvDownload(cv: CvDocument): void {
   try {
     const link = document.createElement('a');
@@ -393,6 +423,7 @@ export function triggerCvDownload(cv: CvDocument): void {
     document.body.removeChild(link);
   } catch (e) {
     console.error('Download error:', e);
+    // Fallback: open in new tab
     window.open(cv.pdfDataUrl, '_blank');
   }
 }
