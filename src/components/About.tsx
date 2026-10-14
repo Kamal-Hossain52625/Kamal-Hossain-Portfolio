@@ -164,6 +164,17 @@ export default function About({
     setMobileSlideIndex((prev) => (prev < workPhotos.length - 1 ? prev + 1 : 0));
   };
 
+  // Mobile carousel slide state for Section 01.5 (Dual-Pillar: Laravel Backend & React Frontend)
+  const [pillarSlideIndex, setPillarSlideIndex] = useState<0 | 1>(0);
+
+  const handlePrevPillarSlide = () => {
+    setPillarSlideIndex((prev) => (prev === 0 ? 1 : 0));
+  };
+
+  const handleNextPillarSlide = () => {
+    setPillarSlideIndex((prev) => (prev === 1 ? 0 : 1));
+  };
+
   useEffect(() => {
     const unsubCloud = subscribeToProfileImage((cloudImg) => {
       setProfileImage(cloudImg);
@@ -362,8 +373,8 @@ export default function About({
             </p>
           </div>
 
-          {/* Dual Pillar Cards Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+          {/* 1. Desktop View: 2-Card Grid (Hidden on Mobile) */}
+          <div className="hidden md:grid md:grid-cols-2 gap-8 items-stretch">
             
             {/* PILLAR 1: BACKEND (LARAVEL & PHP) */}
             <div className="relative group border border-red-500/30 hover:border-red-500/60 rounded-3xl bg-gradient-to-br from-red-950/20 via-[#0e0e14]/90 to-black/95 backdrop-blur-2xl p-7 md:p-8 flex flex-col justify-between shadow-2xl transition-all duration-300">
@@ -543,11 +554,298 @@ export default function About({
 
           </div>
 
-          {/* Full-Stack Integration Connector Ribbon */}
+          {/* 2. Mobile View: Interactive Slide / Carousel System (Visible only on Mobile) */}
+          <div className="block md:hidden">
+            <div className="flex flex-col gap-4">
+              {/* Top Mobile Slide Navigator Toolbar */}
+              <div className="flex items-center justify-between px-2 bg-white/5 border border-white/10 rounded-2xl p-2 backdrop-blur-md">
+                {/* Tab Switcher Pills */}
+                <div className="flex items-center gap-1.5 p-1 bg-black/40 rounded-xl border border-white/10">
+                  <button
+                    onClick={() => setPillarSlideIndex(0)}
+                    className={`px-3 py-1.5 rounded-lg font-mono text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+                      pillarSlideIndex === 0
+                        ? 'bg-red-500/20 text-red-300 border border-red-500/40 shadow-sm'
+                        : 'text-white/50 hover:text-white'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${pillarSlideIndex === 0 ? 'bg-red-500 animate-pulse' : 'bg-white/30'}`} />
+                    Laravel
+                  </button>
+
+                  <button
+                    onClick={() => setPillarSlideIndex(1)}
+                    className={`px-3 py-1.5 rounded-lg font-mono text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+                      pillarSlideIndex === 1
+                        ? 'bg-sky-500/20 text-sky-300 border border-sky-400/40 shadow-sm'
+                        : 'text-white/50 hover:text-white'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${pillarSlideIndex === 1 ? 'bg-sky-400 animate-pulse' : 'bg-white/30'}`} />
+                    React
+                  </button>
+                </div>
+
+                {/* Arrow Navigation */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={handlePrevPillarSlide}
+                    className="w-8 h-8 rounded-xl bg-white/10 hover:bg-orange-500/20 border border-white/15 text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer"
+                    aria-label="Previous pillar slide"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleNextPillarSlide}
+                    className="w-8 h-8 rounded-xl bg-white/10 hover:bg-orange-500/20 border border-white/15 text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer"
+                    aria-label="Next pillar slide"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Swipeable Slide Card */}
+              <div className="overflow-hidden relative touch-pan-y">
+                <AnimatePresence mode="wait">
+                  {pillarSlideIndex === 0 ? (
+                    <motion.div
+                      key="pillar-slide-laravel"
+                      initial={{ opacity: 0, x: 35 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -35 }}
+                      transition={{ duration: 0.28, ease: 'easeOut' }}
+                      drag="x"
+                      dragConstraints={{ left: 0, right: 0 }}
+                      dragElastic={0.2}
+                      onDragEnd={(_, { offset, velocity }) => {
+                        if (offset.x < -35 || velocity.x < -200) {
+                          setPillarSlideIndex(1);
+                        }
+                      }}
+                      className="border border-red-500/35 rounded-3xl bg-gradient-to-br from-red-950/25 via-[#0e0e14]/95 to-black/95 backdrop-blur-2xl p-6 shadow-2xl flex flex-col justify-between cursor-grab active:cursor-grabbing"
+                    >
+                      <div>
+                        {/* Header */}
+                        <div className="flex items-center justify-between gap-3 mb-5 pb-5 border-b border-red-500/20">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+                              <LaravelBrandLogo className="w-7 h-7" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className="font-mono text-[9px] font-extrabold text-red-400 uppercase tracking-widest">
+                                  BACKEND CORE
+                                </span>
+                                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-bold border border-red-500/30">
+                                  98%
+                                </span>
+                              </div>
+                              <h4 className="font-sans text-lg font-bold text-white tracking-wide">
+                                Laravel 11 & PHP 8.3
+                              </h4>
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className="text-white/70 text-xs leading-relaxed mb-5 font-light">
+                          Formulating scalable, secure, and low-latency RESTful APIs, relational databases, and asynchronous task workers.
+                        </p>
+
+                        {/* Capabilities */}
+                        <div className="flex flex-col gap-3 mb-5">
+                          <div className="flex items-start gap-2.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-red-400 mt-0.5 shrink-0" />
+                            <div>
+                              <strong className="text-white text-xs block">RESTful API & Resource Engineering</strong>
+                              <span className="text-white/60 text-[11px] leading-relaxed">
+                                Clean API resource controllers, Form Request validation, rate limiting & JSON schemas.
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-red-400 mt-0.5 shrink-0" />
+                            <div>
+                              <strong className="text-white text-xs block">Eloquent ORM & Database Mastery</strong>
+                              <span className="text-white/60 text-[11px] leading-relaxed">
+                                Complex relations, eager loading (no N+1 queries), migrations & indexing on MySQL/PostgreSQL.
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-red-400 mt-0.5 shrink-0" />
+                            <div>
+                              <strong className="text-white text-xs block">Authentication & API Security</strong>
+                              <span className="text-white/60 text-[11px] leading-relaxed">
+                                Laravel Sanctum & JWT token management, RBAC, CSRF protection & SQL sanitization.
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-red-400 mt-0.5 shrink-0" />
+                            <div>
+                              <strong className="text-white text-xs block">Queues, Caching & Cron Scheduling</strong>
+                              <span className="text-white/60 text-[11px] leading-relaxed">
+                                Redis cache layer, asynchronous queue jobs, automated scheduled CRON tasks & webhook listeners.
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Tech Stack Pills */}
+                      <div className="pt-4 border-t border-red-500/15 flex flex-wrap gap-1.5">
+                        {['Laravel 11', 'PHP 8.3', 'Eloquent ORM', 'RESTful APIs', 'MySQL', 'PostgreSQL', 'Redis', 'Sanctum'].map((tech, idx) => (
+                          <span
+                            key={idx}
+                            className="text-[9px] font-mono px-2 py-0.5 rounded bg-red-500/10 border border-red-500/20 text-red-300 font-semibold"
+                          >
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="pillar-slide-react"
+                      initial={{ opacity: 0, x: 35 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -35 }}
+                      transition={{ duration: 0.28, ease: 'easeOut' }}
+                      drag="x"
+                      dragConstraints={{ left: 0, right: 0 }}
+                      dragElastic={0.2}
+                      onDragEnd={(_, { offset, velocity }) => {
+                        if (offset.x > 35 || velocity.x > 200) {
+                          setPillarSlideIndex(0);
+                        }
+                      }}
+                      className="border border-sky-400/35 rounded-3xl bg-gradient-to-br from-sky-950/25 via-[#0e0e14]/95 to-black/95 backdrop-blur-2xl p-6 shadow-2xl flex flex-col justify-between cursor-grab active:cursor-grabbing"
+                    >
+                      <div>
+                        {/* Header */}
+                        <div className="flex items-center justify-between gap-3 mb-5 pb-5 border-b border-sky-400/20">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-400/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(56,189,248,0.2)]">
+                              <ReactBrandLogo className="w-7 h-7" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className="font-mono text-[9px] font-extrabold text-sky-400 uppercase tracking-widest">
+                                  FRONTEND CORE
+                                </span>
+                                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold border border-sky-400/30">
+                                  98%
+                                </span>
+                              </div>
+                              <h4 className="font-sans text-lg font-bold text-white tracking-wide">
+                                React 19 & TypeScript
+                              </h4>
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className="text-white/70 text-xs leading-relaxed mb-5 font-light">
+                          Crafting modern, ultra-responsive client web applications with zero cumulative layout shift and tactile micro-interactions.
+                        </p>
+
+                        {/* Capabilities */}
+                        <div className="flex flex-col gap-3 mb-5">
+                          <div className="flex items-start gap-2.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 mt-0.5 shrink-0" />
+                            <div>
+                              <strong className="text-white text-xs block">Component-Driven Architecture</strong>
+                              <span className="text-white/60 text-[11px] leading-relaxed">
+                                Modular, reusable, and type-safe components built with React 19 and strict TypeScript interfaces.
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 mt-0.5 shrink-0" />
+                            <div>
+                              <strong className="text-white text-xs block">Reactive State & Seamless API Sync</strong>
+                              <span className="text-white/60 text-[11px] leading-relaxed">
+                                Custom hooks, client-side caching, optimistic UI updates, debounced search & error boundaries.
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 mt-0.5 shrink-0" />
+                            <div>
+                              <strong className="text-white text-xs block">Responsive Tailwind Design Systems</strong>
+                              <span className="text-white/60 text-[11px] leading-relaxed">
+                                Pixel-perfect styling across all viewports with luxury glassmorphic dark palettes.
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 mt-0.5 shrink-0" />
+                            <div>
+                              <strong className="text-white text-xs block">Tactile Motion & Micro-Interactions</strong>
+                              <span className="text-white/60 text-[11px] leading-relaxed">
+                                Fluid 60 FPS transitions via Motion, smooth carousels, SVG charts & canvas graphics.
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Tech Stack Pills */}
+                      <div className="pt-4 border-t border-sky-400/15 flex flex-wrap gap-1.5">
+                        {['React 19', 'TypeScript', 'Tailwind CSS', 'Motion', 'Vite', 'Custom Hooks', 'SPAs', 'Responsive UI'].map((tech, idx) => (
+                          <span
+                            key={idx}
+                            className="text-[9px] font-mono px-2 py-0.5 rounded bg-sky-500/10 border border-sky-400/20 text-sky-300 font-semibold"
+                          >
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Bottom Navigation Dots & Swipe Hint */}
+              <div className="flex flex-col items-center gap-2 mt-1">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPillarSlideIndex(0)}
+                    className={`h-2 rounded-full transition-all cursor-pointer ${
+                      pillarSlideIndex === 0
+                        ? 'w-7 bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]'
+                        : 'w-2 bg-white/20 hover:bg-white/40'
+                    }`}
+                    aria-label="Go to Laravel Backend slide"
+                  />
+                  <button
+                    onClick={() => setPillarSlideIndex(1)}
+                    className={`h-2 rounded-full transition-all cursor-pointer ${
+                      pillarSlideIndex === 1
+                        ? 'w-7 bg-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.6)]'
+                        : 'w-2 bg-white/20 hover:bg-white/40'
+                    }`}
+                    aria-label="Go to React Frontend slide"
+                  />
+                </div>
+                <span className="text-[10px] font-mono text-white/40 tracking-wider">
+                  ← Swipe left/right or tap buttons to slide →
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Full-Stack Integration Connector Ribbon (No Gemini/Sparkles logo) */}
           <div className="mt-8 p-5 md:p-6 rounded-2xl bg-gradient-to-r from-red-950/20 via-white/5 to-sky-950/20 border border-white/10 backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 shrink-0">
-                <Sparkles className="w-5 h-5" />
+                <Layers className="w-5 h-5" />
               </div>
               <div>
                 <span className="text-[10px] font-mono font-bold text-orange-400 uppercase tracking-widest block">
