@@ -30,17 +30,22 @@ import {
   CheckCircle2,
   Database,
   Server,
-  Zap
+  Zap,
+  Award,
+  ArrowUpRight,
+  ExternalLink
 } from 'lucide-react';
-import { getStoredProfileImage, subscribeToProfileImage } from '../lib/storage';
+import { getStoredProfileImage, subscribeToProfileImage, isUserAdmin } from '../lib/storage';
 import {
   getStoredAboutPhotos,
   subscribeToAboutPhotos,
   getStoredCvDocument,
   subscribeToCvDocument
 } from '../lib/aboutStorage';
-import { AboutWorkPhoto, CvDocument } from '../types';
+import { getStoredCertifications, subscribeToCertifications } from '../lib/certificatesStorage';
+import { AboutWorkPhoto, CvDocument, Certification } from '../types';
 import CvModal from './CvModal';
+import CertificateViewerModal from './CertificateViewerModal';
 
 // Authentic SVG Brand Logos for Section 01.5
 function LaravelBrandLogo({ className = 'w-7 h-7' }: { className?: string }) {
@@ -124,9 +129,13 @@ const manifestoItems: ManifestoItem[] = [
 export default function About({
   isExpandedOnMobile,
   onToggleExpandMobile,
+  isMasteryExpanded: externalMasteryExpanded,
+  onToggleMasteryExpand,
 }: {
   isExpandedOnMobile?: boolean;
   onToggleExpandMobile?: (expanded: boolean) => void;
+  isMasteryExpanded?: boolean;
+  onToggleMasteryExpand?: (expanded: boolean) => void;
 } = {}) {
   const [activeManifesto, setActiveManifesto] = useState<string>('visual-noise');
   const activeItem = manifestoItems.find((item) => item.id === activeManifesto) || manifestoItems[0];
@@ -142,6 +151,23 @@ export default function About({
     }
   };
 
+  // Dual-Pillar Mastery (Backend Laravel & Frontend React) collapse / expand state: default to FALSE (normally hidden)
+  const [internalMasteryExpanded, setInternalMasteryExpanded] = useState<boolean>(false);
+  const isMasteryExpanded = externalMasteryExpanded !== undefined ? externalMasteryExpanded : internalMasteryExpanded;
+
+  useEffect(() => {
+    if (externalMasteryExpanded !== undefined) {
+      setInternalMasteryExpanded(externalMasteryExpanded);
+    }
+  }, [externalMasteryExpanded]);
+
+  const handleToggleMastery = (expanded: boolean) => {
+    setInternalMasteryExpanded(expanded);
+    if (onToggleMasteryExpand) {
+      onToggleMasteryExpand(expanded);
+    }
+  };
+
   // Profile image (controlled centrally via Admin Panel)
   const [profileImage, setProfileImage] = useState<string>(getStoredProfileImage);
 
@@ -152,6 +178,10 @@ export default function About({
   // Curriculum Vitae (CV) state - synced from storage/cloud
   const [cvDoc, setCvDoc] = useState<CvDocument>(getStoredCvDocument);
   const [isCvModalOpen, setIsCvModalOpen] = useState(false);
+
+  // Personal Certifications (PDF, JPEG, PNG) - synced from storage/cloud
+  const [aboutCertifications, setAboutCertifications] = useState<Certification[]>(getStoredCertifications);
+  const [selectedCertViewer, setSelectedCertViewer] = useState<Certification | null>(null);
 
   // Mobile carousel slide state for Work Photos
   const [mobileSlideIndex, setMobileSlideIndex] = useState(0);
@@ -188,6 +218,10 @@ export default function About({
       setCvDoc(doc);
     });
 
+    const unsubCerts = subscribeToCertifications((certs) => {
+      setAboutCertifications(certs);
+    });
+
     const handlePhotoUpdate = (e: any) => {
       if (e.detail !== undefined) setProfileImage(e.detail);
       else setProfileImage(getStoredProfileImage());
@@ -203,17 +237,25 @@ export default function About({
       else setCvDoc(getStoredCvDocument());
     };
 
+    const handleCertsUpdate = (e: any) => {
+      if (e.detail) setAboutCertifications(e.detail);
+      else setAboutCertifications(getStoredCertifications());
+    };
+
     window.addEventListener('portfolio_profile_image_updated', handlePhotoUpdate);
     window.addEventListener('portfolio_about_photos_updated', handlePhotosUpdate);
     window.addEventListener('portfolio_cv_updated', handleCvUpdate);
+    window.addEventListener('portfolio_certifications_updated', handleCertsUpdate);
 
     return () => {
       unsubCloud();
       unsubPhotos();
       unsubCv();
+      unsubCerts();
       window.removeEventListener('portfolio_profile_image_updated', handlePhotoUpdate);
       window.removeEventListener('portfolio_about_photos_updated', handlePhotosUpdate);
       window.removeEventListener('portfolio_cv_updated', handleCvUpdate);
+      window.removeEventListener('portfolio_certifications_updated', handleCertsUpdate);
     };
   }, []);
 
@@ -355,26 +397,94 @@ export default function About({
         {/* ========================================================= */}
         {/* 01.5 // CORE DUAL-PILLAR SPECIALIZATION: BACKEND & FRONTEND */}
         {/* ========================================================= */}
-        <div className="mb-24">
-          <div className="flex flex-col items-start gap-2 mb-10">
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-[10px] tracking-[0.3em] text-orange-500 font-extrabold uppercase">
-                01.5 // CORE DUAL-PILLAR ARCHITECTURE
-              </span>
-              <span className="text-[9px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400">
-                PRODUCTION-TESTED
-              </span>
-            </div>
-            <h3 className="font-sans text-2xl md:text-4xl text-white font-bold tracking-tight uppercase italic">
-              Backend Laravel & Frontend React Mastery
-            </h3>
-            <p className="text-white/60 text-xs md:text-sm max-w-2xl leading-relaxed">
-              How I architect modern full-stack systems: pairing Laravel’s battle-tested server-side power with React’s ultra-fluid client reactivity.
-            </p>
-          </div>
+        <div id="mastery-section" className="mb-24">
+          {!isMasteryExpanded ? (
+            /* COLLAPSED / NORMALLY HIDDEN STATE */
+            <div className="relative border border-white/10 hover:border-orange-500/40 rounded-3xl bg-gradient-to-r from-red-950/20 via-white/5 to-sky-950/20 backdrop-blur-2xl p-6 md:p-8 shadow-2xl transition-all duration-300">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-[10px] tracking-[0.3em] text-orange-500 font-extrabold uppercase">
+                      01.5 // CORE DUAL-PILLAR ARCHITECTURE
+                    </span>
+                    <span className="text-[9px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400">
+                      NORMALLY COLLAPSED
+                    </span>
+                  </div>
 
-          {/* 1. Desktop View: 2-Card Grid (Hidden on Mobile) */}
-          <div className="hidden md:grid md:grid-cols-2 gap-8 items-stretch">
+                  <h3 className="font-sans text-2xl md:text-3xl text-white font-bold tracking-tight uppercase italic flex items-center gap-3">
+                    <span>Backend Laravel & Frontend React Mastery</span>
+                  </h3>
+
+                  <p className="text-white/60 text-xs md:text-sm max-w-2xl leading-relaxed">
+                    How I architect modern full-stack systems: pairing Laravel’s battle-tested server-side power with React’s ultra-fluid client reactivity. Tap to expand the complete technical breakdown.
+                  </p>
+
+                  {/* Quick Tech Badges */}
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <span className="px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 font-mono text-[10px] font-semibold flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                      Laravel 11 Backend (98%)
+                    </span>
+                    <span className="px-2.5 py-1 rounded-lg bg-sky-500/10 border border-sky-400/20 text-sky-300 font-mono text-[10px] font-semibold flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+                      React 19 Frontend (98%)
+                    </span>
+                    <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-white/50 font-mono text-[10px]">
+                      Full-Stack REST Architecture
+                    </span>
+                  </div>
+                </div>
+
+                {/* Tactile High-Conversion Expand Button */}
+                <button
+                  onClick={() => handleToggleMastery(true)}
+                  className="w-full lg:w-auto px-6 py-4 rounded-2xl bg-gradient-to-r from-orange-500 via-orange-600 to-orange-500 hover:from-orange-600 hover:to-orange-700 text-black font-mono text-xs font-extrabold uppercase tracking-wider flex items-center justify-center gap-3 shadow-[0_4px_25px_rgba(249,115,22,0.25)] hover:shadow-[0_6px_30px_rgba(249,115,22,0.4)] active:scale-[0.98] transition-all cursor-pointer group shrink-0"
+                >
+                  <Sparkles className="w-4 h-4 text-black group-hover:rotate-12 transition-transform" />
+                  <span>EXPAND MASTERY SECTION</span>
+                  <ChevronDown className="w-4 h-4 text-black animate-bounce" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* EXPANDED / VISIBLE STATE */
+            <AnimatePresence>
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+                  <div className="flex flex-col items-start gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[10px] tracking-[0.3em] text-orange-500 font-extrabold uppercase">
+                        01.5 // CORE DUAL-PILLAR ARCHITECTURE
+                      </span>
+                      <span className="text-[9px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400">
+                        PRODUCTION-TESTED
+                      </span>
+                    </div>
+                    <h3 className="font-sans text-2xl md:text-4xl text-white font-bold tracking-tight uppercase italic">
+                      Backend Laravel & Frontend React Mastery
+                    </h3>
+                    <p className="text-white/60 text-xs md:text-sm max-w-2xl leading-relaxed">
+                      How I architect modern full-stack systems: pairing Laravel’s battle-tested server-side power with React’s ultra-fluid client reactivity.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => handleToggleMastery(false)}
+                    className="self-start sm:self-auto px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95 shrink-0"
+                  >
+                    <ChevronUp className="w-3.5 h-3.5 text-orange-400" />
+                    <span>COLLAPSE MASTERY</span>
+                  </button>
+                </div>
+
+                {/* 1. Desktop View: 2-Card Grid (Hidden on Mobile) */}
+                <div className="hidden md:grid md:grid-cols-2 gap-8 items-stretch">
             
             {/* PILLAR 1: BACKEND (LARAVEL & PHP) */}
             <div className="relative group border border-red-500/30 hover:border-red-500/60 rounded-3xl bg-gradient-to-br from-red-950/20 via-[#0e0e14]/90 to-black/95 backdrop-blur-2xl p-7 md:p-8 flex flex-col justify-between shadow-2xl transition-all duration-300">
@@ -862,7 +972,25 @@ export default function About({
               <span className="px-3 py-1 rounded-lg bg-sky-500/10 border border-sky-400/20 text-sky-300">React Client SPA</span>
             </div>
           </div>
-        </div>
+
+          {/* Bottom Collapse Button */}
+          <div className="mt-8 flex flex-col items-center gap-2">
+            <button
+              onClick={() => {
+                handleToggleMastery(false);
+                const el = document.getElementById('mastery-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="py-3 px-6 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/25 text-white/80 hover:text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-md active:scale-[0.98]"
+            >
+              <ChevronUp className="w-4 h-4 text-orange-400" />
+              <span>COLLAPSE MASTERY (HIDE SECTION)</span>
+            </button>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    )}
+  </div>
 
         {/* ========================================================= */}
         {/* 02 // WORK & CRAFTSMANSHIP: OFFICE, CODING & NEW PROJECTS */}
@@ -1248,6 +1376,138 @@ export default function About({
           </div>
         </div>
 
+        {/* ========================================================= */}
+        {/* 03.5 // VERIFIED PERSONAL CERTIFICATES (PDF, JPEG, PNG)   */}
+        {/* ========================================================= */}
+        <div className="mb-24">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+            <div>
+              <span className="font-mono text-[10px] tracking-[0.3em] text-orange-500 font-extrabold uppercase block mb-2">
+                03.5 // VERIFIED CREDENTIALS & CERTIFICATIONS
+              </span>
+              <h3 className="font-sans text-2xl md:text-4xl text-white font-bold tracking-tight uppercase italic">
+                Personal Certificates ({aboutCertifications.length})
+              </h3>
+              <p className="text-white/50 text-xs md:text-sm mt-2 max-w-2xl leading-relaxed">
+                Authentic certifications in Laravel Backend, React Frontend, Cloud & System Architecture. Uploaded and managed from backend (PDF, JPEG, PNG).
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {isUserAdmin() && (
+                <a
+                  href="/admin"
+                  className="px-3.5 py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 font-mono text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 shadow-md"
+                  title="Upload, change, or edit personal certificates in Admin Dashboard"
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  <span>MANAGE IN BACKEND</span>
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* Grid of Personal Certificates */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {aboutCertifications.map((cert) => {
+              const isPdf =
+                cert.fileType === 'pdf' ||
+                cert.fileDataUrl?.startsWith('data:application/pdf') ||
+                cert.fileName?.toLowerCase().endsWith('.pdf');
+              const hasFile = Boolean(cert.fileDataUrl);
+
+              return (
+                <div
+                  key={cert.id}
+                  onClick={() => setSelectedCertViewer(cert)}
+                  className="group relative border border-white/10 hover:border-orange-500/40 rounded-2xl bg-white/5 hover:bg-white/[0.08] backdrop-blur-xl p-5 transition-all duration-300 flex flex-col justify-between shadow-xl cursor-pointer"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-3 border-b border-white/5 pb-3 mb-3.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Award className="w-4 h-4 text-orange-400 shrink-0" />
+                        <span className="text-[10px] font-mono font-bold text-white/60 uppercase tracking-wider truncate">
+                          {cert.issuer}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-[8px] font-mono font-bold px-2 py-0.5 rounded uppercase border ${
+                          isPdf
+                            ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                            : hasFile
+                            ? 'bg-sky-500/15 text-sky-300 border-sky-400/30'
+                            : 'bg-white/10 text-white/50 border-white/10'
+                        }`}
+                      >
+                        {cert.fileType?.toUpperCase() || (hasFile ? 'DOCUMENT' : 'CREDENTIAL')}
+                      </span>
+                    </div>
+
+                    {/* Document Preview Frame */}
+                    <div className="relative h-36 w-full rounded-xl overflow-hidden bg-black/60 mb-3.5 border border-white/10 flex items-center justify-center select-none group-hover:border-orange-500/30 transition-all">
+                      {hasFile ? (
+                        isPdf ? (
+                          <div className="flex flex-col items-center justify-center p-3 text-center">
+                            <FileText className="w-9 h-9 text-orange-400 mb-1 group-hover:scale-110 transition-transform" />
+                            <span className="text-xs font-mono font-bold text-white truncate max-w-[180px]">
+                              {cert.fileName || 'PDF Certificate'}
+                            </span>
+                            <span className="text-[9px] font-mono text-white/40 mt-0.5">
+                              {cert.fileSize || 'PDF Document'}
+                            </span>
+                          </div>
+                        ) : (
+                          <img
+                            src={cert.fileDataUrl}
+                            alt={cert.title}
+                            className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
+                          />
+                        )
+                      ) : (
+                        <div className="flex flex-col items-center justify-center p-3 text-center text-white/40">
+                          <Award className="w-8 h-8 mb-1 opacity-50" />
+                          <span className="text-xs font-mono">Verified Credential</span>
+                        </div>
+                      )}
+
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+                        <span className="opacity-0 group-hover:opacity-100 px-3 py-1.5 rounded-lg bg-orange-500 text-black font-mono text-[9px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all scale-90 group-hover:scale-100">
+                          <Eye className="w-3.5 h-3.5" /> Preview Document
+                        </span>
+                      </div>
+                    </div>
+
+                    <h4 className="font-sans text-sm font-bold text-white group-hover:text-orange-300 transition-colors line-clamp-2 leading-snug mb-2">
+                      {cert.title}
+                    </h4>
+
+                    <div className="flex flex-col gap-0.5 font-mono text-[9px] text-white/40">
+                      <div>DATE: <span className="text-white/60">{cert.date}</span></div>
+                      <div>ID: <span className="text-white/60">{cert.credentialId}</span></div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
+                    <span className="text-[9px] font-mono text-emerald-400 flex items-center gap-1 font-semibold">
+                      <ShieldCheck className="w-3.5 h-3.5" /> SECURE_RECORD
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedCertViewer(cert);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-orange-500/20 text-white/70 hover:text-orange-300 border border-white/10 hover:border-orange-500/30 text-[9px] font-mono font-bold uppercase transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      <Eye className="w-3 h-3" />
+                      <span>VIEW</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Dynamic UI/UX Audit & Manifesto Panel (CRITICAL REQUIREMENT) */}
         <div id="manifesto-panel" className="border border-white/10 bg-white/5 backdrop-blur-2xl rounded-3xl p-6 md:p-10 relative shadow-2xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-8 mb-6 md:mb-8">
@@ -1594,6 +1854,15 @@ export default function About({
             cv={cvDoc}
             allowUpload={false}
             allowDownload={false}
+          />
+        )}
+
+        {/* Certificate Lightbox Viewer Modal (PDF, JPEG, PNG) */}
+        {selectedCertViewer && (
+          <CertificateViewerModal
+            isOpen={Boolean(selectedCertViewer)}
+            onClose={() => setSelectedCertViewer(null)}
+            cert={selectedCertViewer}
           />
         )}
       </AnimatePresence>

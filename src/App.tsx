@@ -23,7 +23,7 @@ import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
 import ScrollDownButton from './components/ScrollDownButton';
 import { isUserAdmin } from './lib/storage';
-import { Zap, Briefcase, Layout, Award, ChevronDown } from 'lucide-react';
+import { Zap, Briefcase, Layout, Award, ChevronDown, Layers, MessageSquareQuote } from 'lucide-react';
 
 function getCurrentRoute(): 'portfolio' | 'admin' | 'login' {
   const pathname = window.location.pathname.toLowerCase();
@@ -57,6 +57,9 @@ export default function App() {
   const [showAllProjectsMobile, setShowAllProjectsMobile] = useState<boolean>(false);
   const [expandCertificationsMobile, setExpandCertificationsMobile] = useState<boolean>(true);
   const [expandManifestoMobile, setExpandManifestoMobile] = useState<boolean>(false);
+  // Backend Laravel & Frontend React Mastery and Client & Recruiter Words: normally hide, expand on demand
+  const [expandMastery, setExpandMastery] = useState<boolean>(false);
+  const [expandTestimonials, setExpandTestimonials] = useState<boolean>(false);
 
   useEffect(() => {
     const handleRouteChange = () => {
@@ -77,7 +80,7 @@ export default function App() {
   useEffect(() => {
     if (window.location.hash) {
       const hash = window.location.hash.toLowerCase().replace('#', '');
-      if (['skills', 'experience', 'services', 'certifications', 'certs'].includes(hash)) {
+      if (['skills', 'experience', 'services', 'certifications', 'certs', 'testimonials', 'reviews', 'mastery', 'laravel-react'].includes(hash)) {
         handleNavigateSection(window.location.hash);
       }
     }
@@ -111,6 +114,10 @@ export default function App() {
       setShowAllProjectsMobile(true);
     } else if (targetId === 'manifesto' || targetId === 'manifesto-panel') {
       setExpandManifestoMobile(true);
+    } else if (targetId === 'testimonials' || targetId === 'reviews') {
+      setExpandTestimonials(true);
+    } else if (targetId === 'mastery' || targetId === 'mastery-section' || targetId === 'laravel-react') {
+      setExpandMastery(true);
     }
 
     setTimeout(() => {
@@ -176,6 +183,8 @@ export default function App() {
             <About
               isExpandedOnMobile={expandManifestoMobile}
               onToggleExpandMobile={(expanded) => setExpandManifestoMobile(expanded)}
+              isMasteryExpanded={expandMastery}
+              onToggleMasteryExpand={(expanded) => setExpandMastery(expanded)}
             />
 
             {/* Skills grid (display: none on home page by default, viewed when clicked in Navbar) */}
@@ -268,11 +277,54 @@ export default function App() {
                   <Award className="w-3 h-3 text-orange-400" />
                   Certifications {visibleSections.certifications ? '(Visible)' : ''}
                 </button>
+
+                <button
+                  onClick={() => {
+                    setExpandMastery((prev) => !prev);
+                    if (!expandMastery) {
+                      setTimeout(() => {
+                        const el = document.getElementById('mastery-section');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                      }, 100);
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded-full font-mono text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                    expandMastery
+                      ? 'bg-red-500/20 text-red-300 border-red-500/40'
+                      : 'bg-white/5 text-white/60 hover:text-white border-white/10 hover:border-white/20'
+                  }`}
+                >
+                  <Layers className="w-3 h-3 text-red-400" />
+                  Laravel & React {expandMastery ? '(Visible)' : ''}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setExpandTestimonials((prev) => !prev);
+                    if (!expandTestimonials) {
+                      setTimeout(() => {
+                        const el = document.getElementById('testimonials');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                      }, 100);
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded-full font-mono text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                    expandTestimonials
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                      : 'bg-white/5 text-white/60 hover:text-white border-white/10 hover:border-white/20'
+                  }`}
+                >
+                  <MessageSquareQuote className="w-3 h-3 text-emerald-400" />
+                  Client Words {expandTestimonials ? '(Visible)' : ''}
+                </button>
               </div>
             </div>
 
-            {/* Dynamic Quote slider testimonial reviews */}
-            <Testimonials />
+            {/* Dynamic Quote slider testimonial reviews (Normally hidden, expand to view) */}
+            <Testimonials
+              isExpanded={expandTestimonials}
+              onToggleExpand={(expanded) => setExpandTestimonials(expanded)}
+            />
 
             {/* Validated message transmitter channels */}
             <Contact inquiryTopic={inquiryTopic} />

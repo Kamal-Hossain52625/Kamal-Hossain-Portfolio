@@ -34,9 +34,10 @@ import {
   Camera,
   Image as ImageIcon,
   Smartphone,
-  FileText
+  FileText,
+  Award
 } from 'lucide-react';
-import { Project, Inquiry } from '../types';
+import { Project, Inquiry, Certification, AboutWorkPhoto, CvDocument } from '../types';
 import {
   getStoredProjects,
   saveStoredProjects,
@@ -62,6 +63,8 @@ import ProjectFormModal from './ProjectFormModal';
 import CaseStudyModal from './CaseStudyModal';
 import AboutPhotoEditModal from './AboutPhotoEditModal';
 import CvModal from './CvModal';
+import CertificationFormModal from './CertificationFormModal';
+import CertificateViewerModal from './CertificateViewerModal';
 import {
   getStoredAboutPhotos,
   subscribeToAboutPhotos,
@@ -70,7 +73,14 @@ import {
   saveStoredCvDocument,
   triggerCvDownload
 } from '../lib/aboutStorage';
-import { AboutWorkPhoto, CvDocument } from '../types';
+import {
+  getStoredCertifications,
+  addStoredCertification,
+  updateStoredCertification,
+  deleteStoredCertification,
+  resetStoredCertifications,
+  subscribeToCertifications
+} from '../lib/certificatesStorage';
 
 interface AdminDashboardProps {
   onBackToPortfolio: () => void;
@@ -78,9 +88,15 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'projects' | 'inquiries' | 'settings'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'inquiries' | 'settings' | 'certifications'>('projects');
   const [projects, setProjects] = useState<Project[]>(getStoredProjects);
   const [inquiries, setInquiries] = useState<Inquiry[]>(getStoredInquiries);
+
+  // Certifications State
+  const [certifications, setCertifications] = useState<Certification[]>(getStoredCertifications);
+  const [isCertFormOpen, setIsCertFormOpen] = useState(false);
+  const [editingCert, setEditingCert] = useState<Certification | null>(null);
+  const [previewCert, setPreviewCert] = useState<Certification | null>(null);
 
   // Search & Filtering
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,6 +128,43 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
   const [cvUploadStatus, setCvUploadStatus] = useState('');
   const [isAdminUploadingCv, setIsAdminUploadingCv] = useState(false);
 
+  // Certificate action handlers
+  const handleOpenAddCert = () => {
+    setEditingCert(null);
+    setIsCertFormOpen(true);
+  };
+
+  const handleOpenEditCert = (cert: Certification) => {
+    setEditingCert(cert);
+    setIsCertFormOpen(true);
+  };
+
+  const handleSaveCert = (certData: Certification | Omit<Certification, 'id'>) => {
+    if ('id' in certData && certData.id) {
+      const updated = updateStoredCertification(certData as Certification);
+      setCertifications(updated);
+    } else {
+      const updated = addStoredCertification(certData);
+      setCertifications(updated);
+    }
+    setIsCertFormOpen(false);
+    setEditingCert(null);
+  };
+
+  const handleDeleteCert = (id: string, title: string) => {
+    if (window.confirm(`Are you sure you want to delete certificate "${title}"?`)) {
+      const updated = deleteStoredCertification(id);
+      setCertifications(updated);
+    }
+  };
+
+  const handleResetCertDefaults = () => {
+    if (window.confirm('Reset all certificates back to default industry flagship credentials? Custom uploads will be replaced.')) {
+      const reset = resetStoredCertifications();
+      setCertifications(reset);
+    }
+  };
+
   // Sync listener & Cloud Realtime subscriptions
   useEffect(() => {
     // 1. Subscribe to cloud projects & inquiries
@@ -135,6 +188,10 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
       setAdminCvDoc(doc);
     });
 
+    const unsubCerts = subscribeToCertifications((cloudCerts) => {
+      setCertifications(cloudCerts);
+    });
+
     // 2. Broadcast listeners
     const handleProjectsUpdate = (e: any) => {
       if (e.detail) setProjects(e.detail);
@@ -156,12 +213,17 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
       if (e.detail) setAdminCvDoc(e.detail);
       else setAdminCvDoc(getStoredCvDocument());
     };
+    const handleCertsUpdate = (e: any) => {
+      if (e.detail) setCertifications(e.detail);
+      else setCertifications(getStoredCertifications());
+    };
 
     window.addEventListener('portfolio_projects_updated', handleProjectsUpdate);
     window.addEventListener('portfolio_inquiries_updated', handleInquiriesUpdate);
     window.addEventListener('portfolio_profile_image_updated', handleProfileUpdate);
     window.addEventListener('portfolio_about_photos_updated', handleAboutPhotosUpdate);
     window.addEventListener('portfolio_cv_updated', handleCvUpdate);
+    window.addEventListener('portfolio_certifications_updated', handleCertsUpdate);
 
     return () => {
       unsubProjects();
@@ -169,11 +231,13 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
       unsubProfile();
       unsubPhotos();
       unsubCv();
+      unsubCerts();
       window.removeEventListener('portfolio_projects_updated', handleProjectsUpdate);
       window.removeEventListener('portfolio_inquiries_updated', handleInquiriesUpdate);
       window.removeEventListener('portfolio_profile_image_updated', handleProfileUpdate);
       window.removeEventListener('portfolio_about_photos_updated', handleAboutPhotosUpdate);
       window.removeEventListener('portfolio_cv_updated', handleCvUpdate);
+      window.removeEventListener('portfolio_certifications_updated', handleCertsUpdate);
     };
   }, []);
 
@@ -555,6 +619,18 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
             </button>
 
             <button
+              onClick={() => setActiveTab('certifications')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-mono font-extrabold tracking-wider uppercase transition-all cursor-pointer ${
+                activeTab === 'certifications'
+                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+                  : 'text-white/50 hover:text-white'
+              }`}
+            >
+              <Award className="w-3.5 h-3.5" />
+              <span>CERTIFICATES ({certifications.length})</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('settings')}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-mono font-extrabold tracking-wider uppercase transition-all cursor-pointer ${
                 activeTab === 'settings'
@@ -574,6 +650,17 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
                 className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-mono text-[9px] font-extrabold tracking-widest rounded-xl transition-all duration-300 hover:scale-105 cursor-pointer uppercase shadow-xl"
               >
                 <Plus className="w-4 h-4" /> ADD NEW PROJECT
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'certifications' && (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleOpenAddCert}
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-mono text-[9px] font-extrabold tracking-widest rounded-xl transition-all duration-300 hover:scale-105 cursor-pointer uppercase shadow-xl"
+              >
+                <Plus className="w-4 h-4" /> ADD NEW CERTIFICATE
               </button>
             </div>
           )}
@@ -1184,6 +1271,172 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
           </div>
         )}
 
+        {/* TAB 4: CERTIFICATIONS & CREDENTIALS MANAGEMENT */}
+        {activeTab === 'certifications' && (
+          <div className="flex flex-col gap-6">
+            
+            {/* Header / Actions Banner */}
+            <div className="p-6 md:p-8 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="font-mono text-[9px] font-bold text-orange-400 uppercase tracking-widest">
+                    CREDENTIALS & HONORS REPOSITORY
+                  </span>
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold">
+                    ACTIVE FIRESTORE SYNC
+                  </span>
+                </div>
+                <h3 className="font-sans text-xl md:text-2xl font-bold text-white uppercase italic">
+                  Personal Certificates & Licensures ({certifications.length})
+                </h3>
+                <p className="text-white/60 text-xs mt-1 max-w-2xl leading-relaxed">
+                  Upload your personal certificates from your local drive (PDF, JPEG, PNG). Edit, replace documents, or preview how they display on the public portfolio.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={handleResetCertDefaults}
+                  className="px-4 py-2.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white font-mono text-xs font-bold uppercase transition-all cursor-pointer flex items-center gap-2"
+                  title="Reset to default flagship certifications"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>RESET DEFAULTS</span>
+                </button>
+
+                <button
+                  onClick={handleOpenAddCert}
+                  className="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-black font-mono text-xs font-extrabold uppercase tracking-wider transition-all shadow-lg shadow-orange-500/20 cursor-pointer flex items-center gap-2 active:scale-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>ADD CERTIFICATE</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Certificates Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {certifications.map((cert) => {
+                const isPdf =
+                  cert.fileType === 'pdf' ||
+                  cert.fileDataUrl?.startsWith('data:application/pdf') ||
+                  cert.fileName?.toLowerCase().endsWith('.pdf');
+                const hasFile = Boolean(cert.fileDataUrl);
+
+                return (
+                  <div
+                    key={cert.id}
+                    className="border border-white/10 hover:border-orange-500/40 rounded-2xl bg-white/5 hover:bg-white/[0.08] backdrop-blur-xl p-6 transition-all duration-300 flex flex-col justify-between shadow-xl group"
+                  >
+                    <div>
+                      {/* Top Bar: Issuer & Type Badge */}
+                      <div className="flex items-center justify-between gap-3 border-b border-white/5 pb-3 mb-4">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Award className="w-4 h-4 text-orange-400 shrink-0" />
+                          <span className="text-[10px] font-mono font-bold text-white/60 uppercase tracking-wider truncate max-w-[160px]">
+                            {cert.issuer}
+                          </span>
+                        </div>
+                        <span
+                          className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase ${
+                            isPdf
+                              ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                              : hasFile
+                              ? 'bg-sky-500/15 text-sky-300 border border-sky-400/30'
+                              : 'bg-white/10 text-white/50 border border-white/10'
+                          }`}
+                        >
+                          {cert.fileType?.toUpperCase() || (hasFile ? 'DOCUMENT' : 'LINK')}
+                        </span>
+                      </div>
+
+                      {/* Document Thumbnail / Preview Frame */}
+                      <div
+                        onClick={() => setPreviewCert(cert)}
+                        className="relative h-40 w-full rounded-xl overflow-hidden bg-black/60 mb-4 border border-white/10 flex items-center justify-center cursor-pointer group/thumb select-none"
+                      >
+                        {hasFile ? (
+                          isPdf ? (
+                            <div className="flex flex-col items-center justify-center p-4 text-center">
+                              <FileText className="w-10 h-10 text-orange-400 mb-2 group-hover/thumb:scale-110 transition-transform" />
+                              <span className="text-xs font-mono font-bold text-white truncate max-w-[200px]">
+                                {cert.fileName || 'PDF Certificate'}
+                              </span>
+                              <span className="text-[9px] font-mono text-white/40 mt-1">
+                                {cert.fileSize || 'PDF Document'}
+                              </span>
+                            </div>
+                          ) : (
+                            <img
+                              src={cert.fileDataUrl}
+                              alt={cert.title}
+                              className="w-full h-full object-contain p-2 group-hover/thumb:scale-105 transition-transform duration-500"
+                            />
+                          )
+                        ) : (
+                          <div className="flex flex-col items-center justify-center p-4 text-center text-white/40">
+                            <Award className="w-10 h-10 mb-2 opacity-50" />
+                            <span className="text-xs font-mono">External Credential Link</span>
+                          </div>
+                        )}
+
+                        <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/50 transition-colors flex items-center justify-center">
+                          <span className="opacity-0 group-hover/thumb:opacity-100 px-3 py-1.5 rounded-lg bg-orange-500 text-black font-mono text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 shadow-xl transition-all scale-90 group-hover/thumb:scale-100">
+                            <Eye className="w-3.5 h-3.5" /> Preview Document
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Title & Metadata */}
+                      <h4 className="font-sans text-sm md:text-base font-bold text-white group-hover:text-orange-300 transition-colors line-clamp-2 mb-2 leading-snug">
+                        {cert.title}
+                      </h4>
+
+                      <div className="flex flex-col gap-1 text-[10px] font-mono text-white/50 mb-4">
+                        <div>
+                          DATE: <span className="text-white/80">{cert.date}</span>
+                        </div>
+                        <div>
+                          ID: <span className="text-white/80">{cert.credentialId}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions Footer */}
+                    <div className="pt-3 border-t border-white/5 flex items-center justify-between gap-2">
+                      <button
+                        onClick={() => setPreviewCert(cert)}
+                        className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 font-mono text-[10px] font-bold uppercase transition-all cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Eye className="w-3 h-3 text-orange-400" />
+                        <span>VIEW</span>
+                      </button>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleOpenEditCert(cert)}
+                          className="px-3 py-1.5 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 font-mono text-[10px] font-bold uppercase transition-all cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          <span>EDIT</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteCert(cert.id, cert.title)}
+                          className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/25 transition-all cursor-pointer"
+                          title="Delete certificate"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
       </main>
 
       {/* Project Form Modal (Add & Edit) */}
@@ -1222,6 +1475,32 @@ export default function AdminDashboard({ onBackToPortfolio, onLogout }: AdminDas
             onCvUpdated={(updated) => setAdminCvDoc(updated)}
             allowUpload={true}
             allowDownload={true}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Certification Add/Edit Modal */}
+      <AnimatePresence>
+        {isCertFormOpen && (
+          <CertificationFormModal
+            isOpen={isCertFormOpen}
+            onClose={() => {
+              setIsCertFormOpen(false);
+              setEditingCert(null);
+            }}
+            onSave={handleSaveCert}
+            initialCert={editingCert}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Certificate Lightbox Viewer Modal */}
+      <AnimatePresence>
+        {previewCert && (
+          <CertificateViewerModal
+            isOpen={Boolean(previewCert)}
+            onClose={() => setPreviewCert(null)}
+            cert={previewCert}
           />
         )}
       </AnimatePresence>

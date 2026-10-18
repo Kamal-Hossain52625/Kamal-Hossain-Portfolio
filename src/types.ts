@@ -69,7 +69,12 @@ export interface Certification {
   date: string;
   credentialId: string;
   url: string;
-  badgeColor: string;
+  badgeColor?: string;
+  fileType?: 'pdf' | 'jpeg' | 'png' | 'image' | 'link';
+  fileDataUrl?: string; // Base64 data URL for PDF, JPEG, or PNG
+  fileName?: string;
+  fileSize?: string;
+  isCustomUploaded?: boolean;
 }
 
 export interface Inquiry {
